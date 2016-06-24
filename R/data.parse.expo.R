@@ -1,0 +1,28 @@
+
+data.parse.expo <- function(eformula, edata){
+
+  if(!("Formula" %in% class(eformula))){
+    if("formula" %in% class(eformula)){
+      eformula<-Formula(eformula)
+    }else{
+      stop("rformula should be of class \"formula\"")
+    }
+  }
+
+  mf <- model.frame(eformula, na.action = na.pass, data = edata, rhs=1:2, lhs=1:2, drop=FALSE)
+  covar <- model.matrix(eformula, mf, rhs=1, drop=F)[, -1, drop = FALSE]
+  geno <- model.matrix(eformula, mf, rhs=2, drop=F)[, -1, drop = FALSE]
+
+  expo <- model.part(eformula, mf, lhs=1, drop=FALSE)
+  retro <- model.part(eformula, mf, lhs=2, drop=FALSE)
+
+  expo.var <- colnames(expo)
+  retro.var <- colnames(retro)
+  covar.var <- colnames(covar)
+  geno.var <- colnames(geno)
+
+  edat <- data.frame(expo, retro, covar, geno, stringsAsFactors = FALSE)
+
+  list(edat = edat, expo.var = expo.var, retro.var = retro.var, covar.var = covar.var, geno.var = geno.var)
+
+}
