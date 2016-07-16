@@ -1,5 +1,10 @@
 
-mrcc.test <- function(data.retro, data.expo, naive.est){
+mrcc.test <- function(rdata, edata){
+
+  nm <- naive.method(rdata, edata)
+  naive.est <- nm$naive.est
+  summary.h <- nm$summary.h
+  edata <- nm$edata # vz might have been changed
 
   ap <- align.parameter(naive.est)
   par <- ap$par
@@ -7,48 +12,59 @@ mrcc.test <- function(data.retro, data.expo, naive.est){
 
   # for(i in 1:1000){
   #   par1 <- par + runif(length(par), -.2, .2)
-  #   par2 <- par1
-  #   par2['bet.z'] <- par2['bet.z'] + 1e-8
-  #   gr1 <- score.hess(par1, data.retro, data.expo, par.pos)$gr
-  #   gr2 <- score.hess(par2, data.retro, data.expo, par.pos)$gr
-  #   h1 <- (gr2['bet.z']-gr1['bet.z'])/1e-8
-  #   h2 <- score.hess(par1, data.retro, data.expo, par.pos)$hess['bet.z', 'bet.z']
-  #   print(h1/h2)
+  #   h1 <- optim(par1, neg.log.lik, gr = score,
+  #               rdata = rdata, edata = edata, par.pos = par.pos,
+  #               method = 'BFGS', control = list(trace = 0, maxit = 0),
+  #               hessian = TRUE)$hessian
+  #   h2 <- hessian(par1, rdata, edata, par.pos)
+  #   print(c(i,range(h1/h2)))
   # }
 
-  # for(i in 1:1000){
-  #   par1 <- par + runif(length(par), -.5, .5)
-  #   gr <- score.hess(par1, data.retro, data.expo, par.pos)$gr
+  # for(i in 1:10000){
+  #   par1 <- par + runif(length(par), -1, 1)
+  #   gr <- score(par1, rdata, edata, par.pos)
   #   tmp <- NULL
   #   for(j in 1:length(par)){
   #     par2 <- par1
   #     par2[j] <- par2[j] + 1e-8
-  #     fn1 <- neg.log.lik(par1, data.retro, data.expo, par.pos)
-  #     fn2 <- neg.log.lik(par2, data.retro, data.expo, par.pos)
+  #     fn1 <- neg.log.lik(par1, rdata, edata, par.pos)
+  #     fn2 <- neg.log.lik(par2, rdata, edata, par.pos)
   #     tmp <- c(tmp, (fn2-fn1)/1e-8)
   #   }
-  #   print(tmp/gr)
-  #   print('')
+  #   print(range(tmp/gr))
   # }
 
-  if(0){
-    fit0 <- optim(par, neg.log.lik, gr = NULL, data.retro = data.retro, data.expo = data.expo, par.pos = par.pos, method = 'BFGS', control = list(trace = 0, maxit = 1e4), hessian = TRUE)
-    se0 <- sqrt(diag(solve(fit0$hessian)))
-    names(se0) <- names(fit0$par)
+  fit <- newton.raphson(par, rdata, edata, par.pos)
+
+  if(!fit$convergence){
+    return(list(res = NULL, gr = NULL, fn = NULL, convergence = fit$convergence))
   }
 
-  fit <- newton.raphson(par, data.retro, data.expo, par.pos)
+  hess <- fit$hess
+  info <- fisher.info(fit$par, rdata, edata, par.pos)
 
-  info <- solve(fit$hessian)
-  se <- sqrt(diag(info))
+  inv.hess <- solve(hess)
+  cov <- inv.hess %*% info %*% inv.hess
+  se <- sqrt(diag(cov))
   names(se) <- names(fit$par)
 
-  summary.n <- data.frame(Estimate = fit$par, SE = se, stringsAsFactors = FALSE)
+  se0 <- sqrt(diag(inv.hess))
+  names(se0) <- names(fit$par)
+
+  summary.n <- data.frame(Estimate = fit$par, SE = se, SE0 = se0, stringsAsFactors = FALSE)
   rownames(summary.n) <- names(par)
   summary.n$z <- summary.n$Estimate / summary.n$SE
   summary.n$"Pr(>|z|)" <- pchisq(summary.n$z^2, df = 1, lower.tail = FALSE)
 
-  list(summary.n = summary.n, gr = fit$gr, fn = fit$fn, convergence = fit$convergence)
+  res <- rbind(summary.n, summary.h)
+
+  var.e <- paste0('alp.', c('0', edata$vh, edata$vx, edata$vg))
+  var.r <- paste0('bet.', c(rdata$vx, rdata$vy, edata$vz))
+  var.0 <- setdiff(names(par), c(var.e, var.r))
+
+  res <- res[c(var.0, var.e, var.r), ]
+
+  list(res = res, gr = fit$gr, fn = fit$fn, convergence = fit$convergence)
 
 }
 

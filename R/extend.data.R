@@ -1,40 +1,50 @@
 
-extend.data <- function(data.retro, data.expo){
+extend.data <- function(rdata, edata){
 
-  overlap.covar <- intersect(data.expo$covar.var, data.retro$covar.var)
-  if(is.null(overlap.covar)){
-    overlap.covar <- character()
+  vx <- intersect(edata$covar.var, rdata$covar.var)
+  if(is.null(vx)){
+    vx <- character()
   }
-  data.expo$overlap.covar <- overlap.covar
-  data.retro$overlap.covar <- overlap.covar
+  edata$vx <- vx
+  rdata$vx <- vx
 
-  add.covar.expo <- setdiff(data.expo$covar.var, data.retro$covar.var)
-  if(is.null(add.covar.expo)){
-    add.covar.expo <- character()
+  vh <- setdiff(edata$covar.var, rdata$covar.var)
+  if(is.null(vh)){
+    vh <- character()
   }
-  data.expo$add.covar.expo <- add.covar.expo
+  edata$vh <- vh
 
-  for(v in add.covar.expo){
-    data.retro$rdat[, v] <- 0
-  }
-
-  add.covar.retro <- setdiff(data.retro$covar.var, data.expo$covar.var)
-  if(is.null(add.covar.retro)){
-    add.covar.retro <- character()
-  }
-  data.retro$add.covar.retro <- add.covar.retro
-
-  for(v in add.covar.retro){
-    data.expo$edat[, v] <- 0
+  for(v in vh){
+    rdata$data[, v] <- 0
   }
 
-  if(setequal(data.retro$geno.var, data.expo$geno.var)){
-    data.retro$geno.var <- data.expo$geno.var
+  vy <- setdiff(rdata$covar.var, edata$covar.var)
+  if(is.null(vy)){
+    vy <- character()
+  }
+  rdata$vy <- vy
+
+  for(v in vy){
+    edata$data[, v] <- 0
+  }
+
+  if(setequal(rdata$geno.var, edata$geno.var)){
+    rdata$vg <- rdata$geno.var
+    edata$vg <- rdata$geno.var
   }else{
     stop('The same set of SNPs should be measured in case-control study and exposure data. ')
   }
 
-  list(data.retro = data.retro, data.expo = data.expo)
+  rdata$vd <- rdata$retro.var
+  rdata$vg <- rdata$geno.var
+  edata$vd <- edata$retro.var
+  edata$vz <- edata$expo.var
+  edata$vg <- edata$geno.var
+
+  rdata <- list(data = rdata$data, vx = rdata$vx, vy = rdata$vy, vd = rdata$vd, vg = rdata$vg)
+  edata <- list(data = edata$data, vx = edata$vx, vh = edata$vh, vd = edata$vd, vz = edata$vz, vg = edata$vg)
+
+  list(rdata = rdata, edata = edata)
 
 
 }

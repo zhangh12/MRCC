@@ -1,7 +1,7 @@
 
 reset.ini <- function(par, nseed){
 
-  message('reset initial guess')
+  #message('reset initial guess')
   if(nseed == 0){
     par[] <- 0
   }else{

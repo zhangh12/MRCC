@@ -1,5 +1,5 @@
 
-data.parse.retro <- function(rformula, rdata){
+parse.rdata <- function(rformula, rdata){
 
   if(!("Formula" %in% class(rformula))){
     if("formula" %in% class(rformula)){
@@ -8,6 +8,16 @@ data.parse.retro <- function(rformula, rdata){
       stop("rformula should be of class \"formula\"")
     }
   }
+
+  if(!('id' %in% colnames(rdata))){
+    stop('Cannot find a column \'id\' in rdata')
+  }
+
+  if(any(duplicated(rdata$id))){
+    stop('ID in rdata is not unique')
+  }
+
+  rownames(rdata) <- rdata$id
 
   mf <- model.frame(rformula, na.action = na.pass, data = rdata, rhs=1:2, lhs=1, drop=FALSE)
   covar <- model.matrix(rformula, mf, rhs=1, drop=F)[, -1, drop = FALSE]
@@ -18,8 +28,8 @@ data.parse.retro <- function(rformula, rdata){
   retro.var <- colnames(retro)
   covar.var <- colnames(covar)
   geno.var <- colnames(geno)
-  rdat <- data.frame(retro, covar, geno, stringsAsFactors = FALSE)
+  data <- data.frame(retro, covar, geno, stringsAsFactors = FALSE)
 
-  list(rdat = rdat, retro.var = retro.var, covar.var = covar.var, geno.var = geno.var)
+  list(data = data, retro.var = retro.var, covar.var = covar.var, geno.var = geno.var)
 
 }

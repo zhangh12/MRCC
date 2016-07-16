@@ -1,5 +1,5 @@
 
-data.parse.expo <- function(eformula, edata){
+parse.edata <- function(eformula, edata){
 
   if(!("Formula" %in% class(eformula))){
     if("formula" %in% class(eformula)){
@@ -8,6 +8,16 @@ data.parse.expo <- function(eformula, edata){
       stop("rformula should be of class \"formula\"")
     }
   }
+
+  if(!('id' %in% colnames(edata))){
+    stop('Cannot find a column \'id\' in edata')
+  }
+
+  if(any(duplicated(edata$id))){
+    stop('ID in edata is not unique')
+  }
+
+  rownames(edata) <- edata$id
 
   mf <- model.frame(eformula, na.action = na.pass, data = edata, rhs=1:2, lhs=1:2, drop=FALSE)
   covar <- model.matrix(eformula, mf, rhs=1, drop=F)[, -1, drop = FALSE]
@@ -21,8 +31,8 @@ data.parse.expo <- function(eformula, edata){
   covar.var <- colnames(covar)
   geno.var <- colnames(geno)
 
-  edat <- data.frame(expo, retro, covar, geno, stringsAsFactors = FALSE)
+  data <- data.frame(expo, retro, covar, geno, stringsAsFactors = FALSE)
 
-  list(edat = edat, expo.var = expo.var, retro.var = retro.var, covar.var = covar.var, geno.var = geno.var)
+  list(data = data, expo.var = expo.var, retro.var = retro.var, covar.var = covar.var, geno.var = geno.var)
 
 }

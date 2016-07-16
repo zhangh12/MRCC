@@ -1,8 +1,12 @@
 
-neg.log.lik <- function(par, data.retro, data.expo, par.pos){
+neg.log.lik <- function(par, rdata, edata, par.pos){
 
-  ne <- nrow(data.expo$edat)
-  nr <- nrow(data.retro$rdat)
+  if(any(is.na(par))){
+    return(NULL)
+  }
+
+  ne <- nrow(edata$data)
+  nr <- nrow(rdata$data)
 
   a <- par['a']
 
@@ -15,68 +19,65 @@ neg.log.lik <- function(par, data.retro, data.expo, par.pos){
   c <- par['c']
   alp.0 <- par['alp.0']
 
-  if('alp.o' %in% par.pos$par.name){
-    alp.o <- par[par.pos['alp.o', 'start']:par.pos['alp.o', 'end']]
+  if('alp.x' %in% par.pos$par.name){
+    alp.x <- par[par.pos['alp.x', 'start']:par.pos['alp.x', 'end']]
   }else{
-    alp.o <- NA
+    alp.x <- NA
   }
 
   alp.g <- par[par.pos['alp.g', 'start']:par.pos['alp.g', 'end']]
 
-  if('bet.a' %in% par.pos$par.name){
-    bet.a <- par[par.pos['bet.a', 'start']:par.pos['bet.a', 'end']]
+  if('bet.y' %in% par.pos$par.name){
+    bet.y <- par[par.pos['bet.y', 'start']:par.pos['bet.y', 'end']]
   }else{
-    bet.a <- NA
+    bet.y <- NA
   }
 
-  if('bet.o' %in% par.pos$par.name){
-    bet.o <- par[par.pos['bet.o', 'start']:par.pos['bet.o', 'end']]
+  if('bet.x' %in% par.pos$par.name){
+    bet.x <- par[par.pos['bet.x', 'start']:par.pos['bet.x', 'end']]
   }else{
-    bet.o <- NA
+    bet.x <- NA
   }
 
-  bet.e <- par[par.pos['bet.e', 'start']:par.pos['bet.e', 'end']]
+  bet.z <- par[par.pos['bet.z', 'start']:par.pos['bet.z', 'end']]
 
-  const <- a + alp.0 * bet.e + .5 * exp(c) * bet.e^2
+  lin <- a + alp.0 * bet.z + .5 * exp(c) * bet.z^2
   if(!is.na(b)){
-    const <- const + b * bet.e
+    lin <- lin + b * bet.z
   }
 
-  lin <- as.matrix(data.retro$rdat[, data.retro$geno.var, drop = FALSE]) %*% alp.g * bet.e
-  if(length(data.retro$overlap.covar) > 0){
-    lin <- lin + as.matrix(data.retro$rdat[, data.retro$overlap.covar, drop = FALSE]) %*% (bet.o + bet.e * alp.o)
+  rg <- as.matrix(rdata$data[, rdata$vg, drop = FALSE])
+  eg <- as.matrix(edata$data[, edata$vg, drop = FALSE])
+
+  lin <- lin + rg %*% alp.g * bet.z
+  if(length(rdata$vx) > 0){
+    rx <- as.matrix(rdata$data[, rdata$vx, drop = FALSE])
+    lin <- lin + rx %*% (bet.x + bet.z * alp.x)
   }
 
-  if(length(data.retro$add.covar.retro) > 0){
-    lin <- lin + as.matrix(data.retro$rdat[, data.retro$add.covar.retro, drop = FALSE]) %*% bet.a
+  if(length(rdata$vy) > 0){
+    ry <- as.matrix(rdata$data[, rdata$vy, drop = FALSE])
+    lin <- lin + ry %*% bet.y
   }
 
-  lin <- const + lin
-  if(max(lin) > 10){
-    offset <- max(lin) - 10
-  }else{
-    offset <- 0
-  }
-
-  lin <- lin - offset
-
+  lin <- as.vector(lin)
   delta <- exp(lin)
 
-  n1 <- sum(data.retro$rdat[, data.retro$retro.var])
+  rd <- rdata$data[, rdata$vd]
+  n1 <- sum(rd)
   n0 <- nr - n1
-  p <- (exp(-offset) + n1/n0 * delta)
 
-  res <- data.expo$edat[, data.expo$expo.var] - alp.0 - as.matrix(data.expo$edat[, data.expo$geno.var]) %*% alp.g
+  res <- edata$data[, edata$vz] - alp.0 - eg %*% alp.g
   if(!is.na(b)){
-    res <- res - (bet.e * exp(c) + b) * data.expo$edat[, data.expo$retro.var]
+    res <- res - (bet.z * exp(c) + b) * edata$data[, edata$vd]
   }
 
-  if(length(data.expo$overlap.covar) > 0){
-    res <- res - as.matrix(data.expo$edat[, data.expo$overlap.covar, drop = FALSE]) %*% alp.o
+  if(length(edata$vx) > 0){
+    ex <- as.matrix(edata$data[, edata$vx, drop = FALSE])
+    res <- res - ex %*% alp.x
   }
 
-  -(-nr*(offset+log(n0)) - sum(log(p)) + sum(data.retro$rdat[, data.retro$retro.var] * lin) - .5 * log(2 * pi) * ne - .5 * c * ne -
-      .5 / exp(c) * sum(res^2))
+  -(sum(rd * lin) - nr * log(n0) - sum(log(1 + n1 / n0 * delta)) - ne * log(2*pi)/2 - ne * c/2 - exp(-c)/2 * sum(res^2))
 
 }
 
