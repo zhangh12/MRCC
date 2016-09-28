@@ -22,16 +22,21 @@ score <- function(par, rdata, edata, par.pos){
 
   if('alp.x' %in% par.pos$par.name){
     alp.x <- par[par.pos['alp.x', 'start']:par.pos['alp.x', 'end']]
+    nx <- length(alp.x)
   }else{
     alp.x <- NA
+    nx <- 0
   }
 
   alp.g <- par[par.pos['alp.g', 'start']:par.pos['alp.g', 'end']]
+  ng <- length(alp.g)
 
   if('bet.y' %in% par.pos$par.name){
     bet.y <- par[par.pos['bet.y', 'start']:par.pos['bet.y', 'end']]
+    ny <- length(bet.y)
   }else{
     bet.y <- NA
+    ny <- 0
   }
 
   if('bet.x' %in% par.pos$par.name){
@@ -46,16 +51,18 @@ score <- function(par, rdata, edata, par.pos){
 
   rg <- as.matrix(rdata$data[, rdata$vg, drop = FALSE])
   eg <- as.matrix(edata$data[, edata$vg, drop = FALSE])
-  prd <- as.vector(alp.0 + exp(c) * bet.z + rg %*% alp.g)
+  eta.g <- as.vector(rg %*% alp.g)
+  eta <- eta.g
 
-  if(length(rdata$vx) > 0){
+  if(nx > 0){
     rx <- as.matrix(rdata$data[, rdata$vx, drop = FALSE])
     ex <- as.matrix(edata$data[, edata$vx, drop = FALSE])
-    prd <- prd + as.vector(rx %*% alp.x)
+    eta.x <- as.vector(rx %*% alp.x)
+    eta <- eta + eta.x
   }
-  prd <- as.vector(prd)
+  eta <- as.vector(eta)
 
-  if(length(rdata$vy) > 0){
+  if(ny > 0){
     ry <- as.matrix(rdata$data[, rdata$vy, drop = FALSE])
   }
 
@@ -63,17 +70,14 @@ score <- function(par, rdata, edata, par.pos){
   n1 <- sum(rd)
   n0 <- nr - n1
 
-  lin <- a + alp.0 * bet.z + .5 * exp(c) * bet.z^2
-  if(!is.na(b)){
-    lin <- lin + b * bet.z
-  }
+  lin <- a
 
   lin <- lin + rg %*% alp.g * bet.z
-  if(length(rdata$vx) > 0){
+  if(nx > 0){
     lin <- lin + rx %*% (bet.x + bet.z * alp.x)
   }
 
-  if(length(rdata$vy) > 0){
+  if(ny > 0){
     lin <- lin + ry %*% bet.y
   }
 
@@ -82,19 +86,26 @@ score <- function(par, rdata, edata, par.pos){
   delta <- exp(lin)
 
   p <- 1/ n0 / (1 + n1/n0 * delta) # 1 / (n0 + n1 * delta)
-  d.hat <- 1 - 1 / (1 + n1/n0 * delta) # n1 * delta / (n0 + n1 * delta) = 1 - n0 / (n0 + n1 * delta)
-  Delta <- rd - d.hat
-  xi <- -d.hat * (1 - d.hat)
+  Delta <- -1 + 1 / (1 + n1/n0 * delta) # -n1 p delta
+  xi <- Delta * (1 + Delta)
 
   res <- edata$data[, edata$vz] - alp.0 - eg %*% alp.g
   if(!is.na(b)){
     res <- res - (bet.z * exp(c) + b) * edata$data[, edata$vd]
   }
 
-  if(length(edata$vx) > 0){
+  if(nx > 0){
     res <- res - ex %*% alp.x
   }
   res <- as.vector(res)
+
+  one <- rep(1, ne)
+
+  name.alp.g <- paste0('alp.', rdata$vg)
+  name.alp.x <- paste0('alp.', rdata$vx)
+  name.bet.x <- paste0('bet.', rdata$vx)
+  name.bet.y <- paste0('bet.', rdata$vy)
+  name.bet.z <- paste0('bet.', edata$vz)
 
   ############################
   ## calculate score vector ##
@@ -103,39 +114,27 @@ score <- function(par, rdata, edata, par.pos){
   gr <- rep(NA, length(par))
   names(gr) <- names(par)
 
-  ell.a <- sum(Delta)
-  gr['a'] <- ell.a
+  gr['c'] <- -ne/2 + exp(-c)/2 * sum(res^2)
 
-  ell.c <- .5 * exp(c) * bet.z^2 * sum(Delta) - ne/2 + exp(-c)/2 * sum(res^2)
-  gr['c'] <- ell.c
+  gr['alp.0'] <- exp(-c) * sum(res)
 
-  if(length(rdata$vx) > 0){
-    ell.bet.x <- t(rx) %*% Delta
-    ell.bet.x <- as.vector(ell.bet.x)
-    gr[paste0('bet.', rdata$vx)] <- ell.bet.x
+  if(nx > 0){
+    gr[name.alp.x] <- as.vector(bet.z * (t(rx) %*% (rd + Delta)) + exp(-c) * (t(ex) %*% res))
   }
 
-  if(length(rdata$vy) > 0){
-    ell.bet.y <- t(ry) %*% Delta
-    ell.bet.y <- as.vector(ell.bet.y)
-    gr[paste0('bet.', rdata$vy)] <- ell.bet.y
+  gr[name.alp.g] <- as.vector(bet.z * (t(rg) %*% (rd + Delta)) + exp(-c) * (t(eg) %*% res))
+
+  gr['a'] <- sum(rd + Delta)
+
+  if(nx > 0){
+    gr[name.bet.x] <- as.vector(t(rx) %*% (rd + Delta))
   }
 
-  ell.bet.z <- sum(Delta * prd)
-  gr[paste0('bet.', edata$vz)] <- ell.bet.z
-
-  ell.alp.0 <- bet.z * sum(Delta) + exp(-c) * sum(res)
-  gr['alp.0'] <- ell.alp.0
-
-  if(length(rdata$vx) > 0){
-    ell.alp.x <- bet.z * t(rx) %*% Delta + exp(-c) * t(ex) %*% res
-    ell.alp.x <- as.vector(ell.alp.x)
-    gr[paste0('alp.', edata$vx)] <- ell.alp.x
+  if(ny > 0){
+    gr[name.bet.y] <- as.vector(t(ry) %*% (rd + Delta))
   }
 
-  ell.alp.g <- bet.z * t(rg) %*% Delta + exp(-c) * t(eg) %*% res
-  ell.alp.g <- as.vector(ell.alp.g)
-  gr[paste0('alp.', edata$vg)] <- ell.alp.g
+  gr[name.bet.z] <- sum((rd + Delta) * eta)
 
   gr <- - gr
 

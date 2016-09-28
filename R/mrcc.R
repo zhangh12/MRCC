@@ -1,6 +1,6 @@
 
 
-mrcc <- function(rformula, rdata, eformula, edata){
+mrcc <- function(rformula, rdata, eformula, edata, tpar = NULL){
 
   rdata <- parse.rdata(rformula, rdata)
   edata <- parse.edata(eformula, edata)
@@ -10,7 +10,10 @@ mrcc <- function(rformula, rdata, eformula, edata){
   rdata <- exd$rdata
   edata <- exd$edata
 
-  mrcc.test(rdata, edata)
+  res <- mrcc.test(rdata, edata, tpar)
+  res$TSLS <- TSLS.test(rdata, edata, tpar)
+
+  res
 
 }
 

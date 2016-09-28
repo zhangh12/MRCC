@@ -42,7 +42,7 @@ extend.data <- function(rdata, edata){
   edata$vg <- edata$geno.var
 
   rdata <- list(data = rdata$data, vx = rdata$vx, vy = rdata$vy, vd = rdata$vd, vg = rdata$vg)
-  edata <- list(data = edata$data, vx = edata$vx, vh = edata$vh, vd = edata$vd, vz = edata$vz, vg = edata$vg)
+  edata <- list(data = edata$data, vx = edata$vx, vh = edata$vh, vd = edata$vd, vg = edata$vg, vz = edata$vz)
 
   list(rdata = rdata, edata = edata)
 

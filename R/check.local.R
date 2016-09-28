@@ -2,7 +2,8 @@
 check.local <- function(par, rdata, edata, par.pos){
 
   s <- seq(-2,2,length.out = 100)
-  par(mfrow=c(4,4))
+  n <- ceiling(sqrt(length(par)))
+  par(mfrow=c(n,n))
   for(kk in 1:length(par)){
     f <- NULL
     for(s0 in s){

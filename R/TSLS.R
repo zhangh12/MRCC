@@ -1,5 +1,7 @@
 
-naive.method <- function(rdata, edata){
+# two-stage least square
+
+TSLS <- function(rdata, edata){
 
   form <- create.formula(rdata, edata)
   rform <- form$rform
@@ -57,7 +59,8 @@ naive.method <- function(rdata, edata){
   }
 
   if(length(rdata$vx) > 0){
-    bet.x <- coef(rfit)[rdata$vx] - bet.z * alp.x[paste0('alp.',rdata$vx)]
+    #bet.x <- coef(rfit)[rdata$vx] - bet.z * alp.x[paste0('alp.',rdata$vx)]
+    bet.x <- coef(rfit)[rdata$vx]
     names(bet.x) <- paste0('bet.', rdata$vx)
   }else{
     bet.x <- NA

@@ -41,10 +41,7 @@ neg.log.lik <- function(par, rdata, edata, par.pos){
 
   bet.z <- par[par.pos['bet.z', 'start']:par.pos['bet.z', 'end']]
 
-  lin <- a + alp.0 * bet.z + .5 * exp(c) * bet.z^2
-  if(!is.na(b)){
-    lin <- lin + b * bet.z
-  }
+  lin <- a
 
   rg <- as.matrix(rdata$data[, rdata$vg, drop = FALSE])
   eg <- as.matrix(edata$data[, edata$vg, drop = FALSE])
