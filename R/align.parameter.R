@@ -1,17 +1,17 @@
 
 
-align.parameter <- function(naive.est){
+align.parameter <- function(fit){
 
   par.name <- NULL
   start <- NULL
   end <- NULL
   par <- NULL
 
-  for(i in 1:9){
-    tmp <- naive.est[[names(naive.est)[i]]]
+  for(i in 1:8){
+    tmp <- fit[[names(fit)[i]]]
     if(all(!is.na(tmp))){
       par <- c(par, tmp)
-      par.name <- c(par.name, names(naive.est)[i])
+      par.name <- c(par.name, names(fit)[i])
       rg <- range(which(names(par) %in% names(tmp)))
       start <- c(start, rg[1])
       end <- c(end, rg[2])

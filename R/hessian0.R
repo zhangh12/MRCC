@@ -1,5 +1,4 @@
 
-
 hessian0 <- function(par, rdata, edata, par.pos){
 
   if(any(is.na(par))){
@@ -24,12 +23,6 @@ hessian0 <- function(par, rdata, edata, par.pos){
   nr <- nrow(rdata$data)
 
   a <- par['a']
-
-  if('b' %in% par.pos$par.name){
-    b <- par['b']
-  }else{
-    b <- NA
-  }
 
   c <- par['c']
   alp.0 <- par['alp.0']
@@ -65,16 +58,15 @@ hessian0 <- function(par, rdata, edata, par.pos){
 
   rg <- as.matrix(rdata$data[, rdata$vg, drop = FALSE])
   eg <- as.matrix(edata$data[, edata$vg, drop = FALSE])
-  eta.g <- as.vector(rg %*% alp.g)
-  eta <- eta.g
+  eg2 <- eg[id2, , drop = FALSE]
+  eta <- as.vector(rg %*% alp.g)
 
   if(nx > 0){
     rx <- as.matrix(rdata$data[, rdata$vx, drop = FALSE])
     ex <- as.matrix(edata$data[, edata$vx, drop = FALSE])
-    eta.x <- as.vector(rx %*% alp.x)
-    eta <- eta + eta.x
+    ex2 <- ex[id2, , drop = FALSE]
+    #eta.x <- as.vector(rx %*% alp.x)
   }
-  eta <- as.vector(eta)
 
   if(ny > 0){
     ry <- as.matrix(rdata$data[, rdata$vy, drop = FALSE])
@@ -84,11 +76,9 @@ hessian0 <- function(par, rdata, edata, par.pos){
   n1 <- sum(rd)
   n0 <- nr - n1
 
-  lin <- a
-
-  lin <- lin + rg %*% alp.g * bet.z
+  lin <- a + rg %*% alp.g * bet.z
   if(nx > 0){
-    lin <- lin + rx %*% (bet.x + bet.z * alp.x)
+    lin <- lin + rx %*% bet.x
   }
 
   if(ny > 0){
@@ -103,15 +93,12 @@ hessian0 <- function(par, rdata, edata, par.pos){
   Delta <- -1 + 1 / (1 + n1/n0 * delta) # -n1 p delta
   xi <- Delta * (1 + Delta)
 
-  res <- edata$data[, edata$vz] - alp.0 - eg %*% alp.g
-  if(!is.na(b)){
-    res <- res - (bet.z * exp(c) + b) * edata$data[, edata$vd]
-  }
+  r <- edata$data[, edata$vz] - alp.0 - eg %*% alp.g
 
   if(nx > 0){
-    res <- res - ex %*% alp.x
+    r <- r - ex %*% alp.x
   }
-  res <- as.vector(res)
+  r <- as.vector(r)
 
   one <- rep(1, ne)
   one2 <- rep(1, m2)
@@ -134,79 +121,34 @@ hessian0 <- function(par, rdata, edata, par.pos){
   ## calculate Hess matrix ##
   ###########################
 
-  hess <- matrix(NA, nrow = length(par), ncol = length(par))
+  hess <- matrix(0, nrow = length(par), ncol = length(par))
   rownames(hess) <- names(par)
   colnames(hess) <- names(par)
 
-  hess['c', 'c'] <- -1/2 * ne
-
-  hess['c', 'alp.0'] <- 0
-
-  if(nx > 0){
-    hess['c', name.alp.x] <- 0
-  }
-
-  hess['c', name.alp.g] <- 0
-
-  hess['c', 'a'] <- 0
-
-  if(nx > 0){
-    hess['c', name.bet.x] <- 0
-  }
-
-  if(ny > 0){
-    hess['c', name.bet.y] <- 0
-  }
-
-  hess['c', name.bet.z] <- 0
+  hess['c', 'c'] <- -ne/c^2/2
 
   ############
 
-  hess['alp.0', 'alp.0'] <- -exp(-c) * ne
+  hess['alp.0', 'alp.0'] <- -ne/c
 
   if(nx > 0){
-    hess['alp.0', name.alp.x] <- -exp(-c) * (t(t(ex[id2, , drop = FALSE]) %*% one2) + m3 * t(t(p * rx) %*% one13))
+    hess['alp.0', name.alp.x] <- -1/c * (t(t(ex2) %*% one2) + m3 * t(t(p * rx) %*% one13))
   }
 
-  hess['alp.0', name.alp.g] <- -exp(-c) * (t(t(eg[id2, , drop = FALSE]) %*% one2) + m3 * t(t(p * rg) %*% one13))
-
-  hess['alp.0', 'a'] <- 0
-
-  if(nx > 0){
-    hess['alp.0', name.bet.x] <- 0
-  }
-
-  if(ny > 0){
-    hess['alp.0', name.bet.y] <- 0
-  }
-
-  hess['alp.0', name.bet.z] <- 0
+  hess['alp.0', name.alp.g] <- -1/c * (t(t(eg2) %*% one2) + m3 * t(t(p * rg) %*% one13))
 
   ############
 
   if(nx > 0){
-    hess[name.alp.x, name.alp.x] <- bet.z^2 * n0 * (t(rx) %*% (p * Delta * rx)) -
-      exp(-c) * (t(ex[id2, , drop = FALSE]) %*% ex[id2, , drop = FALSE] + m3 * t(rx) %*% (p * rx))
+    hess[name.alp.x, name.alp.x] <- -1/c * (t(t(ex2) %*% ex2) + m3 * t(t(p * rx) %*% rx))
 
-    hess[name.alp.x, name.alp.g] <- bet.z^2 * n0 * (t(rx) %*% (p * Delta * rg)) -
-      exp(-c) * (t(ex[id2, , drop = FALSE]) %*% eg[id2, , drop = FALSE] + m3 * t(rx) %*% (p * rg))
-
-    hess[name.alp.x, 'a'] <- bet.z * n0 * (t(rx) %*% (p * Delta))
-
-    hess[name.alp.x, name.bet.x] <- bet.z * n0 * (t(rx) %*% (p * Delta * rx))
-
-    if(ny > 0){
-      hess[name.alp.x, name.bet.y] <- bet.z * n0 * (t(rx) %*% (p * Delta * ry))
-    }
-
-    hess[name.alp.x, name.bet.z] <- bet.z * n0 * (t(rx) %*% (p * Delta * eta))
+    hess[name.alp.x, name.alp.g] <- -1/c * (t(t(ex2) %*% eg2) + m3 * t(t(p * rx) %*% rg))
   }
 
   ############
 
   a33 <- -bet.z^2 * n0 * (t(rg) %*% (p * Delta * rg))
-  hess[name.alp.g, name.alp.g] <- bet.z^2 * n0 * (t(rg) %*% (p * Delta * rg)) -
-    exp(-c) * (t(eg[id2, , drop = FALSE]) %*% eg[id2, , drop = FALSE] + m3 * t(rg) %*% (p * rg))
+  hess[name.alp.g, name.alp.g] <- -a33 - 1/c * (t(t(eg2) %*% eg2) + m3 * t(t(p * rg) %*% rg))
 
   hess[name.alp.g, 'a'] <- bet.z * n0 * (t(rg) %*% (p * Delta))
 
@@ -260,13 +202,11 @@ hessian0 <- function(par, rdata, edata, par.pos){
 
   for(i in 1:nrow(hess)){
     for(j in 1:ncol(hess)){
-      if(is.na(hess[i, j])){
+      if(hess[i, j] == 0){
         hess[i, j] <- hess[j, i]
       }
     }
   }
-
-  hess <- -hess
 
   hess <- (hess + t(hess))/2
 

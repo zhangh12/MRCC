@@ -1,5 +1,5 @@
 
-TSLS.fisher.info <- function(par, rdata, edata, par.pos){
+fisher.info.TSLS <- function(par, rdata, edata, par.pos){
 
   id3 <- intersect(rownames(rdata$data), rownames(edata$data))
   id1 <- setdiff(rownames(rdata$data), id3)
@@ -19,12 +19,6 @@ TSLS.fisher.info <- function(par, rdata, edata, par.pos){
   nr <- nrow(rdata$data)
 
   a <- par['a']
-
-  if('b' %in% par.pos$par.name){
-    b <- par['b']
-  }else{
-    b <- NA
-  }
 
   c <- par['c']
   alp.0 <- par['alp.0']
@@ -66,6 +60,8 @@ TSLS.fisher.info <- function(par, rdata, edata, par.pos){
   if(nx > 0){
     rx <- as.matrix(rdata$data[, rdata$vx, drop = FALSE])
     ex <- as.matrix(edata$data[, edata$vx, drop = FALSE])
+    #eta.x <- as.vector(rx %*% alp.x)
+    #names(eta.x) <- rownames(rx)
   }
 
   if(ny > 0){
@@ -77,9 +73,7 @@ TSLS.fisher.info <- function(par, rdata, edata, par.pos){
   n1 <- sum(rd)
   n0 <- nr - n1
 
-  lin <- a
-
-  lin <- lin + rg %*% alp.g * bet.z
+  lin <- a + rg %*% alp.g * bet.z
   if(nx > 0){
     lin <- lin + rx %*% bet.x
   }
@@ -97,16 +91,13 @@ TSLS.fisher.info <- function(par, rdata, edata, par.pos){
   Delta <- -1 + 1 / (1 + n1/n0 * delta) # -n1 p delta
   xi <- Delta * (1 + Delta)
 
-  res <- edata$data[, edata$vz] - alp.0 - eg %*% alp.g
-  if(!is.na(b)){
-    res <- res - (bet.z * exp(c) + b) * edata$data[, edata$vd]
-  }
+  r <- edata$data[, edata$vz] - alp.0 - eg %*% alp.g
 
   if(nx > 0){
-    res <- res - ex %*% alp.x
+    r <- r - ex %*% alp.x
   }
-  res <- as.vector(res)
-  names(res) <- rownames(eg)
+  r <- as.vector(r)
+  names(r) <- rownames(eg)
 
   name.alp.g <- paste0('alp.', rdata$vg)
   if(nx > 0){
@@ -128,42 +119,40 @@ TSLS.fisher.info <- function(par, rdata, edata, par.pos){
   rownames(sc) <- names(par)
   colnames(sc) <- c(id1, id2, id3)
 
-  id10.3 <- c(id10, id3)
+  id13 <- c(id1, id3)
   id23 <- c(id2, id3)
 
-  # c
-  sc['c', id23] <- -1/2 + exp(-c)/2 * res[id23]^2
+  ## c
+  sc['c', id23] <- -1/c/2 + 1/c^2/2 * r[id23]^2
 
-  # alp.0
-  sc['alp.0', id23] <- exp(-c) * res[id23]
+  ## alp.0
+  sc['alp.0', id23] <- 1/c * r[id23]
 
-  # alp.x
+  ## alp.x
   if(nx > 0){
-    sc[name.alp.x, id23] <- exp(-c) * t(res[id23] * ex[id23, , drop = FALSE])
+    sc[name.alp.x, id23] <- 1/c * t(r[id23] * ex[id23, , drop = FALSE])
   }
 
-  # alp.g
-  sc[name.alp.g, id23] <- exp(-c) * t(res[id23] * eg[id23, , drop = FALSE])
+  ## alp.g
+  sc[name.alp.g, id23] <- 1/c * t(r[id23] * eg[id23, , drop = FALSE])
 
-  # a
-  sc['a', id10.3] <- Delta[id10.3]
-  sc['a', id11] <- 1 + Delta[id11]
+  ## a
+  sc['a', id13] <- rd[id13] + Delta[id13]
 
-  # bet.x
+  ## bet.x
   if(nx > 0){
-    sc[name.bet.x, id10.3] <- t(Delta[id10.3] * rx[id10.3, , drop = FALSE])
-    sc[name.bet.x, id11] <- t((1 + Delta[id11]) * rx[id11, , drop = FALSE])
+    sc[name.bet.x, id13] <- t((rd[id13] + Delta[id13]) * rx[id13, , drop = FALSE])
   }
 
-  # bet.y
+  ## bet.y
   if(ny > 0){
-    sc[name.bet.y, id10.3] <- t(Delta[id10.3] * ry[id10.3, , drop = FALSE])
-    sc[name.bet.y, id11] <- t((1 + Delta[id11]) * ry[id11, , drop = FALSE])
+    sc[name.bet.y, id13] <- t((rd[id13] + Delta[id13]) * ry[id13, , drop = FALSE])
   }
 
-  # bet.z
-  sc[name.bet.z, id10.3] <- Delta[id10.3] * eta[id10.3]
-  sc[name.bet.z, id11] <- (1 + Delta[id11]) * eta[id11]
+  ## bet.z
+  sc[name.bet.z, id13] <- (rd[id13] + Delta[id13]) * eta[id13]
+
+  n <- length(c(id1,id2,id3))
 
   if(n10 > 0){
     cov10 <- (n10 - 1) * cov(t(sc[, id10]))

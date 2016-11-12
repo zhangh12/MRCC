@@ -1,6 +1,6 @@
 
 
-mrcc <- function(rformula, rdata, eformula, edata, tpar = NULL){
+mrcc <- function(rformula, rdata, eformula, edata, nb = 500, level = 0.95){
 
   rdata <- parse.rdata(rformula, rdata)
   edata <- parse.edata(eformula, edata)
@@ -9,11 +9,16 @@ mrcc <- function(rformula, rdata, eformula, edata, tpar = NULL){
 
   rdata <- exd$rdata
   edata <- exd$edata
+  summary.h <- exd$summary.h
 
-  res <- mrcc.test(rdata, edata, tpar)
-  res$TSLS <- TSLS.test(rdata, edata, tpar)
+  c.adj <- null.adjustment(rdata, edata, nb)
+  res.wald <- wald.test(rdata, edata, c.adj$c.wald, level)
+  res.lrt <- LRT(rdata, edata, res.wald$par, res.wald$se, c.adj$c.lrt, level)
+  res.tsls <- TSLS.test(rdata, edata)
 
-  res
+  summary.mrcc(rdata, edata, c.adj, res.wald, res.lrt, res.tsls)
+
+  list(summary.h = summary.h, res.wald = res.wald, res.lrt = res.lrt, res.tsls = res.tsls, c.adj = c.adj)
 
 }
 

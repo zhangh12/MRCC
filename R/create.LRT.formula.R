@@ -1,8 +1,8 @@
 
 
-create.formula <- function(rdata, edata){
+create.LRT.formula <- function(rdata, edata, bet){
 
-  rform <- paste(rdata$vd, '~ pred.expo')
+  rform <- paste(rdata$vd, '~ offset(I(', bet, '* pred.expo))')
   if(length(rdata$vx) > 0){
     rform <- paste(rform, '+', paste(rdata$vx, collapse = '+'))
   }

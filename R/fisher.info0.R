@@ -19,8 +19,8 @@ fisher.info0 <- function(par, rdata, edata, par.pos){
   n1 <- n11
 
   hess <- hessian0(par, rdata, edata, par.pos)
-  J1 <- hess[, 'a', drop = FALSE]
-  info <- hess - (n0 + n1)/(n0 * n1) * (J1 %*% t(J1))
+  J1 <- -hess[, 'a', drop = FALSE]
+  info <- -hess - (n0 + n1)/(n0 * n1) * (J1 %*% t(J1))
   info
 
 }

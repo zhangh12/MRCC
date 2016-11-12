@@ -1,5 +1,5 @@
 
-neg.log.lik <- function(par, rdata, edata, par.pos){
+logL <- function(par, rdata, edata, par.pos){
 
   if(any(is.na(par))){
     return(NULL)
@@ -9,12 +9,6 @@ neg.log.lik <- function(par, rdata, edata, par.pos){
   nr <- nrow(rdata$data)
 
   a <- par['a']
-
-  if('b' %in% par.pos$par.name){
-    b <- par['b']
-  }else{
-    b <- NA
-  }
 
   c <- par['c']
   alp.0 <- par['alp.0']
@@ -49,7 +43,7 @@ neg.log.lik <- function(par, rdata, edata, par.pos){
   lin <- lin + rg %*% alp.g * bet.z
   if(length(rdata$vx) > 0){
     rx <- as.matrix(rdata$data[, rdata$vx, drop = FALSE])
-    lin <- lin + rx %*% (bet.x + bet.z * alp.x)
+    lin <- lin + rx %*% bet.x
   }
 
   if(length(rdata$vy) > 0){
@@ -60,21 +54,21 @@ neg.log.lik <- function(par, rdata, edata, par.pos){
   lin <- as.vector(lin)
   delta <- exp(lin)
 
-  rd <- rdata$data[, rdata$vd]
+  rd <- as.vector(rdata$data[, rdata$vd])
   n1 <- sum(rd)
   n0 <- nr - n1
 
-  res <- edata$data[, edata$vz] - alp.0 - eg %*% alp.g
-  if(!is.na(b)){
-    res <- res - (bet.z * exp(c) + b) * edata$data[, edata$vd]
-  }
+  r <- edata$data[, edata$vz] - alp.0 - eg %*% alp.g
 
   if(length(edata$vx) > 0){
     ex <- as.matrix(edata$data[, edata$vx, drop = FALSE])
-    res <- res - ex %*% alp.x
+    r <- r - ex %*% alp.x
   }
+  r <- as.vector(r)
 
-  -(sum(rd * lin) - nr * log(n0) - sum(log(1 + n1 / n0 * delta)) - ne * log(2*pi)/2 - ne * c/2 - exp(-c)/2 * sum(res^2))
+  l <- sum(rd * lin) - nr * log(n0) - sum(log(1 + n1/n0 * delta)) - ne * log(2*pi)/2 - ne * log(c)/2 - 1/c/2 * sum(r^2)
+  names(l) <- NULL
+  l
 
 }
 
