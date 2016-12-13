@@ -1,5 +1,5 @@
 
-wald.test <- function(rdata, edata, c.wald, level, mle.only = FALSE){
+wald.test1 <- function(rdata, edata, c.wald, level, mle.only = FALSE){
 
   tsls <- find.tsls(rdata, edata)
 
@@ -7,7 +7,7 @@ wald.test <- function(rdata, edata, c.wald, level, mle.only = FALSE){
   par.tsls <- ap$par
   par.pos <- ap$par.pos
 
-  t1 <- try(par <- find.mle(par.tsls, rdata, edata, par.pos))
+  t1 <- try(par <- find.mle.2S(par.tsls, rdata, edata, par.pos))
   if('try-error' %in% class(t1)){
     return(NULL)
   }
@@ -46,8 +46,7 @@ wald.test <- function(rdata, edata, c.wald, level, mle.only = FALSE){
 
   #####
 
-  list(par = par, se = se1, ap.wald = ap.wald, c.wald = c.wald, ci = ci,
-       summary.n = summary.n, gr = gr, max.logL = max.logL)
+  list(par = par, se = se1, ap.wald = ap.wald, c.wald = c.wald, ci = ci, summary.n = summary.n, gr = gr, max.logL = max.logL)
 
 }
 

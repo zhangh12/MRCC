@@ -25,11 +25,16 @@ SS <- function(rd,rg,ez,eg){
   # bet.meta <- sum(w*b.y/b.x)/sum(w) # eq (1) Mokry et al. (2015) PLoS Med
   # se.meta <- sqrt(1/sum(w)) # eq (2)  Mokry et al. (2015) PLoS Med
 
+  rho <- cor(edata[edata$d==0, paste0('g',1:np)])
+  omega <- diag(se.y) %*% rho %*% diag(se.y)
+  bet.c <- solve(t(b.x) %*% solve(omega) %*% b.x) %*% t(b.x) %*% solve(omega) %*% b.y
+  se.c <- sqrt(solve(t(b.x) %*% solve(omega) %*% b.x))
+
   #causal effect, yang's method
   se <- sqrt(b.y^2/b.x^2* (se.x^2/b.x^2 + se.y^2/b.y^2))
   bet.d <- sum(b.y/b.x/se^2)/sum(1/se^2)
   se.d <- sqrt(1/sum(1/se^2))
 
-  c(bet.b =bet.b,se.b=se.b,bet.d=bet.d,se.d=se.d)
+  c(bet.b =bet.b,se.b=se.b,bet.d=bet.d,se.d=se.d,bet.c=bet.c,se.c=se.c)
 
 }

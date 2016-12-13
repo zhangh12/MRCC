@@ -1,7 +1,7 @@
 
 check.mle <- function(par, rdata, edata, par.pos, tol = 1e-8){
 
-  if(any(is.na(par))){
+  if(is.null(par) || any(is.na(par))){
     return(FALSE)
   }
 

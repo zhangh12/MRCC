@@ -8,7 +8,7 @@ find.LRT.mle <- function(rdata, edata, par.pos, bet, ncut = 50){
   par.pos <- ap$par.pos
 
   t1 <- try(par <- newton.raphson.LRT(par.tsls, rdata, edata, par.pos), silent = TRUE)
-  if(('try-error' %in% class(t1)) | !check.LRT.mle(par, rdata, edata, par.pos)){
+  if(('try-error' %in% class(t1)) || !check.LRT.mle(par, rdata, edata, par.pos)){
     s0 <- score.LRT(par.tsls, rdata, edata, par.pos)
     par <- par.tsls
     for(i in (ncut-1):0){
