@@ -32,7 +32,7 @@ find.profile.mle <- function(rdata, edata){
       }
     }
 
-    plot(b0, fn, type = 'b', pch = 20, cex = .3)
+    plot(b0, fn, type = 'b', pch = 20, cex = .3, main = 'Profile Likelihood of beta')
   }
 
   b0 <- b0[which.max(fn)]

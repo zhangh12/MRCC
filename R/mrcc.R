@@ -18,7 +18,7 @@ mrcc <- function(rformula, rdata, eformula, edata, nb = 500, level = 0.95, start
     return(NULL)
   }
 
-  find.profile.mle(rdata, edata)
+  #find.profile.mle(rdata, edata)
 
   #res.wald1 <- wald.test1(rdata, edata, c.adj$c.wald, level)
   res.lm <- LM.test(rdata, edata, res.tsls$par, res.tsls$se, level, b.ci, fig)

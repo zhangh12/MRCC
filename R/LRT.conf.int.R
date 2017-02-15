@@ -1,8 +1,8 @@
 
 LRT.conf.int <- function(rdata, edata, logL.obs.alt, par, se, c.lrt, level, fig){
 
-  par.pos <- align.parameter(find.tsls(rdata, edata))$par.pos
   crit <- c.lrt * qchisq(level, df = 1)
+  par.pos <- align.parameter(find.tsls(rdata, edata))$par.pos
 
   name.bet.z <- paste0('bet.', edata$vz)
   se <- se[name.bet.z]
@@ -10,19 +10,15 @@ LRT.conf.int <- function(rdata, edata, logL.obs.alt, par, se, c.lrt, level, fig)
   names(b0) <- NULL
   names(se) <- NULL
   rm(par)
-  bet <- seq(b0 - 5 * qnorm((1+level)/2) * se, b0 + 5 * qnorm((1+level)/2) * se, by = .1)
+  bet <- seq(b0 - 10 * qnorm((1+level)/2) * se, b0 + 10 * qnorm((1+level)/2) * se, by = .05)
   bet <- c(bet, 0)
   bet[abs(bet) < 1e-3] <- 0
   bet <- sort(unique(bet))
 
   lr.stat <- NULL
-  left1 <- -Inf
-  left2 <- Inf
-  right1 <- -Inf
-  right2 <- Inf
 
   for(b in bet){
-    if(abs(b) < 1e-3){
+    if(b == 0){
       par.mle <- align.parameter(find.null.tsls(rdata, edata))$par
     }else{
       par.mle <-  try(find.LRT.mle(rdata, edata, b), silent = TRUE)
@@ -38,55 +34,72 @@ LRT.conf.int <- function(rdata, edata, logL.obs.alt, par, se, c.lrt, level, fig)
     if(fig){
       plot(bet[1:length(lr.stat)],lr.stat,pch=20,cex=.2,type='b',ylim=range(c(crit,lr.stat), na.rm = TRUE))
       abline(h=crit)
-    }
-
-    tmp.b <- bet[!is.na(lr.stat)]
-    tmp <- lr.stat[!is.na(lr.stat)]
-    len <- length(tmp)
-    if(len > 2){
-      if(tmp[len] <= crit && tmp[len-1] >= crit){
-        left1 <- tmp.b[len-1]
-        right1 <- tmp.b[len]
-        next
-      }
-
-      if(tmp[len] >= crit && tmp[len-1] <= crit){
-        left2 <- tmp.b[len-1]
-        right2 <- tmp.b[len]
-        break
-      }
+      abline(v=b0)
     }
   }
 
 
-  bet <- bet[1:length(lr.stat)]
+  bet <- bet[!is.na(lr.stat)]
+  lr.stat <- na.omit(lr.stat)
 
-  if(is.infinite(left1)){
-    lci <- -Inf
-  }else{
-    lci <- NULL
+  delta0 <- lr.stat - crit
+  delta1 <- head(delta0, -1)
+  delta2 <- delta0[-1]
+
+  # approx points for left CI
+  left1 <- NULL
+  left2 <- NULL
+
+  if(delta1[1] < 0){
+    left1 <- -Inf
+    left2 <- -Inf
   }
 
-  if(is.infinite(left2)){
-    rci <- Inf
-  }else{
-    rci <- NULL
+  id <- which(delta1 >= 0 & delta2 <= 0)
+  if(length(id) > 0){
+    left1 <- c(left1, bet[id])
+    left2 <- c(left2, bet[id+1])
   }
 
-  if(any(is.infinite(c(lci, rci)))){
-    return(c(LCL = NA, RCL = NA))
+  # approx points for right CI
+  right1 <- NULL
+  right2 <- NULL
+
+  id <- which(delta1 <= 0 & delta2 >= 0)
+  if(length(id) > 0){
+    right1 <- c(right1, bet[id])
+    right2 <- c(right2, bet[id+1])
   }
+
+  if(tail(delta0, 1) < 0){
+    right1 <- c(right1, Inf)
+    right2 <- c(right2, Inf)
+  }
+
+  if(length(left1) != length(right1)){
+    stop('debug')
+  }
+
+  nci <- length(left1)
 
   # search for left end point of CI
-  b00 <- NULL
-  b0 <- right1
-  b1 <- left1
-  if(is.null(lci)){
+  lci <- NULL
+  for(i in 1:nci){
+    b1 <- left1[i]
+    b2 <- left2[i]
+
+    if(is.infinite(b1)){
+      lci <- c(lci, b1)
+      next
+    }
+
+    bs <- NULL
     while(TRUE){
-      b <- (b0 + b1)/2
-      b00 <- c(b00, b)
-      if(length(b00) > 20 && sd(tail(b00, 10)) < 1e-3){
-        lci <- b
+      b <- (b1 + b2)/2
+      bs <- c(bs, b)
+      cond <- ((length(bs) >2 && sd(tail(bs, 2)) == 0) || (length(bs) > 20 && sd(tail(bs, 10))  < 1e-3))
+      if(cond){
+        lci <- c(lci, b)
         break
       }
 
@@ -103,44 +116,53 @@ LRT.conf.int <- function(rdata, edata, logL.obs.alt, par, se, c.lrt, level, fig)
 
       stat <- 2 * (logL.obs.alt - logL(par.mle, rdata, edata, par.pos))
       if(stat > crit + 1e-3){
+        b1 <- b
         if(fig){
           plot(bet,lr.stat,pch=20,cex=.2,type='b')
           abline(v = b,col='red')
-          abline(v = b0,col='blue')
-          abline(v = b1,col='blue')
           abline(h=crit,col='blue')
         }
-        b1 <- b
         next
       }
 
       if(stat < crit - 1e-3){
+        b0 <- b
         if(fig){
           plot(bet,lr.stat,pch=20,cex=.2,type='b')
           abline(v = b,col='red')
-          abline(v = b0,col='blue')
-          abline(v = b1,col='blue')
           abline(h=crit,col='blue')
         }
-        b0 <- b
         next
       }
 
-      lci <- b
+      lci <- c(lci, b)
+      if(fig){
+        plot(bet,lr.stat,pch=20,cex=.2,type='b')
+        abline(v = b,col='red')
+        abline(h=crit,col='blue')
+      }
       break
     }
   }
 
   # search for right end point of CI
-  b00 <- NULL
-  b0 <- left2
-  b2 <- right2
-  if(is.null(rci)){
+  rci <- NULL
+  for(i in 1:nci){
+    b1 <- right1[i]
+    b2 <- right2[i]
+
+    if(is.infinite(b1)){
+      rci <- c(rci, b1)
+      next
+    }
+
+    bs <- NULL
     while(TRUE){
-      b <- (b0 + b2)/2
-      b00 <- c(b00, b)
-      if(length(b00) > 20 && sd(tail(b00, 10)) < 1e-3){
-        rci <- b
+      b <- (b1 + b2)/2
+      bs <- c(bs, b)
+      cond <- ((length(bs) >2 && sd(tail(bs, 2)) == 0) || (length(bs) > 20 && sd(tail(bs, 10))  < 1e-3))
+      if(cond){
+        rci <- c(rci, b)
         break
       }
 
@@ -157,34 +179,35 @@ LRT.conf.int <- function(rdata, edata, logL.obs.alt, par, se, c.lrt, level, fig)
 
       stat <- 2 * (logL.obs.alt - logL(par.mle, rdata, edata, par.pos))
       if(stat > crit + 1e-3){
+        b2 <- b
         if(fig){
           plot(bet,lr.stat,pch=20,cex=.2,type='b')
           abline(v = b,col='red')
-          abline(v = b0,col='blue')
-          abline(v = b2,col='blue')
           abline(h=crit,col='blue')
         }
-        b2 <- b
         next
       }
 
       if(stat < crit - 1e-3){
+        b1 <- b
         if(fig){
           plot(bet,lr.stat,pch=20,cex=.2,type='b')
           abline(v = b,col='red')
-          abline(v = b0,col='blue')
-          abline(v = b2,col='blue')
           abline(h=crit,col='blue')
         }
-        b0 <- b
         next
       }
 
-      rci <- b
+      rci <- c(rci, b)
+      if(fig){
+        plot(bet,lr.stat,pch=20,cex=.2,type='b')
+        abline(v = b,col='red')
+        abline(h=crit,col='blue')
+      }
       break
     }
   }
 
-  c(LCL = lci, RCL = rci)
+  data.frame(LCL = lci, RCL = rci)
 
 }

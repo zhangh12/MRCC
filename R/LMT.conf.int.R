@@ -10,19 +10,15 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
   names(b0) <- NULL
   names(se) <- NULL
   rm(par)
-  bet <- seq(b0 - 20 * qnorm((1+level)/2) * se, b0 + 20 * qnorm((1+level)/2) * se, by = .1)
+  bet <- seq(b0 - 10 * qnorm((1+level)/2) * se, b0 + 10 * qnorm((1+level)/2) * se, by = .05)
   bet <- c(bet, 0)
   bet[abs(bet) < 1e-3] <- 0
   bet <- sort(unique(bet))
 
   lm.stat <- NULL
-  left1 <- -Inf
-  left2 <- Inf
-  right1 <- -Inf
-  right2 <- Inf
 
   for(b in bet){
-    if(abs(b) < 1e-3){
+    if(b == 0){
       par.mle <- align.parameter(find.null.tsls(rdata, edata))$par
     }else{
       par.mle <-  try(find.LRT.mle(rdata, edata, b), silent = TRUE)
@@ -50,52 +46,69 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
       abline(v=b0)
     }
 
-    tmp.b <- bet[!is.na(lm.stat)]
-    tmp <- lm.stat[!is.na(lm.stat)]
-    len <- length(tmp)
-    if(len > 2){
-      if(tmp[len] <= crit && tmp[len-1] >= crit){
-        left1 <- tmp.b[len-1]
-        right1 <- tmp.b[len]
-        next
-      }
-
-      if(tmp[len] >= crit && tmp[len-1] <= crit){
-        left2 <- tmp.b[len-1]
-        right2 <- tmp.b[len]
-        #break
-      }
-    }
   }
 
-  bet <- bet[1:length(lm.stat)]
+  bet <- bet[!is.na(lm.stat)]
+  lm.stat <- na.omit(lm.stat)
 
-  if(is.infinite(left1)){
-    lci <- -Inf
-  }else{
-    lci <- NULL
+  delta0 <- lm.stat - crit
+  delta1 <- head(delta0, -1)
+  delta2 <- delta0[-1]
+
+  # approx points for left CI
+  left1 <- NULL
+  left2 <- NULL
+
+  if(delta1[1] < 0){
+    left1 <- -Inf
+    left2 <- -Inf
   }
 
-  if(is.infinite(left2)){
-    rci <- Inf
-  }else{
-    rci <- NULL
+  id <- which(delta1 >= 0 & delta2 <= 0)
+  if(length(id) > 0){
+    left1 <- c(left1, bet[id])
+    left2 <- c(left2, bet[id+1])
   }
 
-  if(any(is.infinite(c(lci, rci)))){
-    return(c(LCL = NA, RCL = NA))
+  # approx points for right CI
+  right1 <- NULL
+  right2 <- NULL
+
+  id <- which(delta1 <= 0 & delta2 >= 0)
+  if(length(id) > 0){
+    right1 <- c(right1, bet[id])
+    right2 <- c(right2, bet[id+1])
   }
+
+  if(tail(delta0, 1) < 0){
+    right1 <- c(right1, Inf)
+    right2 <- c(right2, Inf)
+  }
+
+  if(length(left1) != length(right1)){
+    stop('debug')
+  }
+
+  nci <- length(left1)
 
   # search for left end point of CI
-  b00 <- NULL
-  b0 <- right1
-  b1 <- left1
-  if(is.null(lci)){
+  lci <- NULL
+  for(i in 1:nci){
+    b1 <- left1[i]
+    b2 <- left2[i]
+
+    if(is.infinite(b1)){
+      lci <- c(lci, b1)
+      next
+    }
+
+    bs <- NULL
     while(TRUE){
-      b <- (b0 + b1)/2
-      b00 <- c(b00, b)
-      if(length(b00) > 20 && sd(tail(b00, 10)) < 1e-3){
-        lci <- b
+      b <- (b1 + b2)/2
+      bs <- c(bs, b)
+      cond <- ((length(bs) >2 && sd(tail(bs, 2)) == 0) || (length(bs) > 20 && sd(tail(bs, 10))  < 1e-3))
+      if(cond){
+        lci <- c(lci, b)
         break
       }
 
@@ -130,7 +143,7 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
       }
 
       if(stat < crit - 1e-3){
-        b0 <- b
+        b2 <- b
         if(fig){
           plot(bet,lm.stat,pch=20,cex=.2,type='b')
           abline(v = b,col='red')
@@ -139,21 +152,34 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
         next
       }
 
-      lci <- b
+      lci <- c(lci, b)
+      if(fig){
+        plot(bet,lm.stat,pch=20,cex=.2,type='b')
+        abline(v = b,col='red')
+        abline(h=crit,col='blue')
+      }
       break
     }
   }
 
   # search for right end point of CI
-  b00 <- NULL
-  b0 <- left2
-  b2 <- right2
-  if(is.null(rci)){
+  rci <- NULL
+  for(i in 1:nci){
+    b1 <- right1[i]
+    b2 <- right2[i]
+
+    if(is.infinite(b1)){
+      rci <- c(rci, b1)
+      next
+    }
+
+    bs <- NULL
     while(TRUE){
-      b <- (b0 + b2)/2
-      b00 <- c(b00, b)
-      if(length(b00) > 20 && sd(tail(b00, 10)) < 1e-3){
-        rci <- b
+      b <- (b1 + b2)/2
+      bs <- c(bs, b)
+      cond <- ((length(bs) >2 && sd(tail(bs, 2)) == 0) || (length(bs) > 20 && sd(tail(bs, 10))  < 1e-3))
+      if(cond){
+        rci <- c(rci, b)
         break
       }
 
@@ -188,7 +214,7 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
       }
 
       if(stat < crit - 1e-3){
-        b0 <- b
+        b1 <- b
         if(fig){
           plot(bet,lm.stat,pch=20,cex=.2,type='b')
           abline(v = b,col='red')
@@ -197,11 +223,16 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
         next
       }
 
-      rci <- b
+      rci <- c(rci, b)
+      if(fig){
+        plot(bet,lm.stat,pch=20,cex=.2,type='b')
+        abline(v = b,col='red')
+        abline(h=crit,col='blue')
+      }
       break
     }
   }
 
-  c(LCL = lci, RCL = rci)
+  data.frame(LCL = lci, RCL = rci)
 
 }
