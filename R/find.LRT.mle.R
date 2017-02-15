@@ -1,29 +1,28 @@
 
-find.LRT.mle <- function(rdata, edata, par.pos, bet, ncut = 50){
+# given bet, find MLE of the rest of parameters
+find.LRT.mle <- function(rdata, edata, bet){
 
   tsls <- find.LRT.tsls(rdata, edata, bet)
 
-  ap <- align.parameter(tsls)
+  ap <- align.parameter(tsls, null = TRUE)
   par.tsls <- ap$par
   par.pos <- ap$par.pos
 
-  t1 <- try(par <- newton.raphson.LRT(par.tsls, rdata, edata, par.pos), silent = TRUE)
-  if(('try-error' %in% class(t1)) || !check.LRT.mle(par, rdata, edata, par.pos)){
-    s0 <- score.LRT(par.tsls, rdata, edata, par.pos)
-    par <- par.tsls
-    for(i in (ncut-1):0){
-      v <- i/ncut * s0
-      t2 <- try(par <- newton.raphson.LRT(par, rdata, edata, par.pos, v), silent = TRUE)
-      if('try-error' %in% class(t2)){
-        next
-      }
-    }
+  sol <- optimx(par.tsls, nlogL.LRT, gr = nscore.LRT, method = 'ucminf',
+                rdata = rdata, edata = edata, par.pos = par.pos, bet = bet)
 
-    if(!check.LRT.mle(par, rdata, edata, par.pos)){
-      stop('Cannot find MLE')
+  # sol <- optimx(par.tsls, nlogL.LRT, gr = nscore.LRT, hess = nhessian.LRT, method = 'ucminf',
+  #               rdata = rdata, edata = edata, par.pos = par.pos, bet = bet)
+
+  if(!sol['convcode']){
+    par <- as.vector(t(sol[1, names(par.tsls)]))
+    names(par) <- names(par.tsls)
+
+    if(check.LRT.mle(par, rdata, edata, par.pos, bet)){
+      return(par)
     }
   }
 
-  par
+  stop('optimx fails')
 
 }

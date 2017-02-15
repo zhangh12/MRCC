@@ -1,13 +1,15 @@
 
 
-align.parameter <- function(fit){
+align.parameter <- function(fit, null = FALSE){
 
   par.name <- NULL
   start <- NULL
   end <- NULL
   par <- NULL
 
-  for(i in 1:8){
+  np <- ifelse(null, 7, 8)
+
+  for(i in 1:np){
     tmp <- fit[[names(fit)[i]]]
     if(all(!is.na(tmp))){
       par <- c(par, tmp)

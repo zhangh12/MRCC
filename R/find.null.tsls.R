@@ -1,4 +1,6 @@
 
+# find solution for two-stage method under the null (bet = 0)
+# the solution is also the MLE under the null
 find.null.tsls <- function(rdata, edata){
 
   form <- create.null.formula(rdata, edata)

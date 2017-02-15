@@ -1,23 +1,21 @@
 
-find.mle <- function(par.tsls, rdata, edata, par.pos, ncut = 50){
+find.mle <- function(par.tsls, rdata, edata, par.pos){
 
-  t1 <- try(par <- newton.raphson(par.tsls, rdata, edata, par.pos), silent = FALSE)
-  if(('try-error' %in% class(t1)) || !check.mle(par, rdata, edata, par.pos)){
-    s0 <- score(par.tsls, rdata, edata, par.pos)
-    par <- par.tsls
-    for(i in (ncut-1):0){
-      v <- i/ncut * s0
-      t2 <- try(par <- newton.raphson(par, rdata, edata, par.pos, v), silent = FALSE)
-      if('try-error' %in% class(t2)){
-        next
-      }
-    }
+  sol <- optimx(par.tsls, nlogL, gr = nscore, method = 'ucminf',
+                rdata = rdata, edata = edata, par.pos = par.pos)
 
-    if(!check.mle(par, rdata, edata, par.pos)){
-      stop('Cannot find MLE')
+  # sol <- optimx(par.tsls, nlogL, gr = nscore, hess = nhessian, method = 'ucminf',
+  #               rdata = rdata, edata = edata, par.pos = par.pos)
+
+  if(!sol['convcode']){
+    par <- as.vector(t(sol[1, names(par.tsls)]))
+    names(par) <- names(par.tsls)
+
+    if(check.mle(par, rdata, edata, par.pos)){
+      return(par)
     }
   }
 
-  par
+  stop('optimx fails')
 
 }
