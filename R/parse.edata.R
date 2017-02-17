@@ -19,11 +19,17 @@ parse.edata <- function(eformula, edata){
 
   rownames(edata) <- edata$id
 
-  mf <- model.frame(eformula, na.action = na.pass, data = edata, rhs=1:2, lhs=1, drop=FALSE)
-  covar <- model.matrix(eformula, mf, rhs=1, drop=F)[, -1, drop = FALSE]
-  geno <- model.matrix(eformula, mf, rhs=2, drop=F)[, -1, drop = FALSE]
+  mf <- model.frame(eformula, na.action = na.pass, data = edata, rhs=1:2, lhs=1:2, drop=FALSE)
+  retro <- model.part(eformula, mf, lhs=2, drop=F)
 
-  expo <- model.part(eformula, mf, lhs=1, drop=FALSE)
+  id <- which(retro == 0)
+  if(length(id) == 0){
+    stop('All exposure data are collected from cases')
+  }
+
+  covar <- model.matrix(eformula, mf, rhs=1, drop=F)[id, -1, drop = FALSE]
+  geno <- model.matrix(eformula, mf, rhs=2, drop=F)[id, -1, drop = FALSE]
+  expo <- model.part(eformula, mf, lhs=1, drop=FALSE)[id, , drop = FALSE]
 
   expo.var <- colnames(expo)
   covar.var <- colnames(covar)

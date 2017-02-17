@@ -27,7 +27,7 @@ LRT.conf.int <- function(rdata, edata, logL.obs.alt, par, se, c.lrt, level, fig)
         next
       }
       par.mle <- c(par.mle, b)
-      names(par.mle)[par.pos[name.bet.z, 'start']] <- name.bet.z
+      names(par.mle)[par.pos['bet.z', 'start']] <- name.bet.z
     }
 
     lr.stat <- c(lr.stat, 2 * (logL.obs.alt - logL(par.mle, rdata, edata, par.pos)))
@@ -111,7 +111,7 @@ LRT.conf.int <- function(rdata, edata, logL.obs.alt, par, se, c.lrt, level, fig)
           stop('error in LRT.conf.int')
         }
         par.mle <- c(par.mle, b)
-        names(par.mle)[par.pos[name.bet.z, 'start']] <- name.bet.z
+        names(par.mle)[par.pos['bet.z', 'start']] <- name.bet.z
       }
 
       stat <- 2 * (logL.obs.alt - logL(par.mle, rdata, edata, par.pos))
@@ -174,7 +174,7 @@ LRT.conf.int <- function(rdata, edata, logL.obs.alt, par, se, c.lrt, level, fig)
           stop('error in LRT.conf.int')
         }
         par.mle <- c(par.mle, b)
-        names(par.mle)[par.pos[name.bet.z, 'start']] <- name.bet.z
+        names(par.mle)[par.pos['bet.z', 'start']] <- name.bet.z
       }
 
       stat <- 2 * (logL.obs.alt - logL(par.mle, rdata, edata, par.pos))

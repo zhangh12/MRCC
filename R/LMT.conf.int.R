@@ -27,7 +27,7 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
         next
       }
       par.mle <- c(par.mle, b)
-      names(par.mle)[par.pos[name.bet.z, 'start']] <- name.bet.z
+      names(par.mle)[par.pos['bet.z', 'start']] <- name.bet.z
     }
 
     J0 <- -hessian0(par.mle, rdata, edata, par.pos)
@@ -120,7 +120,7 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
           stop('error in LMT.conf.int')
         }
         par.mle <- c(par.mle, b)
-        names(par.mle)[par.pos[name.bet.z, 'start']] <- name.bet.z
+        names(par.mle)[par.pos['bet.z', 'start']] <- name.bet.z
       }
 
       J0 <- -hessian0(par.mle, rdata, edata, par.pos)
@@ -191,7 +191,7 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
           stop('error in LMT.conf.int')
         }
         par.mle <- c(par.mle, b)
-        names(par.mle)[par.pos[name.bet.z, 'start']] <- name.bet.z
+        names(par.mle)[par.pos['bet.z', 'start']] <- name.bet.z
       }
 
       J0 <- -hessian0(par.mle, rdata, edata, par.pos)
@@ -233,6 +233,7 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
     }
   }
 
+  #id <- which(b0 >= lci & b0 <= rci)
   data.frame(LCL = lci, RCL = rci)
 
 }

@@ -1,7 +1,7 @@
 Package: MRCC
 Type: Package
 Title: Mendelian Randomization for Case-Control Study
-Version: 0.1.6
+Version: 0.1.7
 Date: 2017-02-15
 Author: Han Zhang
 Maintainer: Han Zhang <han.zhang2@nih.gov>

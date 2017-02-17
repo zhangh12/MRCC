@@ -27,7 +27,7 @@ mrcc <- function(rformula, rdata, eformula, edata, nb = 500, level = 0.95, start
   res.wald <- rescale.wald.ci(res.wald, res.lm, edata, level, b.ci)
 
   #return(list(res.wald = res.wald, res.tsls = res.tsls))
-  return(list(res.wald = res.wald, res.lr = res.lr, res.lm = res.lm, res.tsls = res.tsls))
+  return(list(wald = res.wald, lr = res.lr, lm = res.lm, tsls = res.tsls))
 
 }
 
