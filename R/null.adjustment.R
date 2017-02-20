@@ -1,5 +1,5 @@
 
-null.adjustment <- function(rdata, edata, nb = 500){
+null.adjustment <- function(rdata, edata, nb = 0){
 
   if(nb == 0){
     return(list(c.lrt = 1.0, c.wald = 1.0, c.tsls = 1.0))

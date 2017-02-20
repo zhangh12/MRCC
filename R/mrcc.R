@@ -1,6 +1,6 @@
 
 
-mrcc <- function(rformula, rdata, eformula, edata, nb = 500, level = 0.95, start = NULL, b.ci = NULL, fig = FALSE){
+mrcc <- function(rformula, rdata, eformula, edata, level = 0.95, start = NULL, b.ci = NULL, fig = FALSE){
 
   rdata <- parse.rdata(rformula, rdata)
   edata <- parse.edata(eformula, edata)
@@ -11,7 +11,7 @@ mrcc <- function(rformula, rdata, eformula, edata, nb = 500, level = 0.95, start
   edata <- exd$edata
   summary.h <- exd$summary.h
 
-  c.adj <- null.adjustment(rdata, edata, nb)
+  c.adj <- null.adjustment(rdata, edata)
   res.tsls <- TSLS.test(rdata, edata, c.adj$c.tsls, level, FALSE, b.ci)
   res.wald <- wald.test(rdata, edata, c.adj$c.wald, level, FALSE, start, b.ci)
   if(is.null(res.wald)){
