@@ -1,5 +1,5 @@
 
-find.tsls <- function(rdata, edata){
+find.tsls <- function(rdata, edata, tsls = FALSE){
 
   form <- create.formula(rdata, edata)
   rform <- form$rform
@@ -16,6 +16,14 @@ find.tsls <- function(rdata, edata){
   }else{
     alp.x <- coef(efit)[edata$vx]
     names(alp.x) <- paste0('alp.', edata$vx)
+  }
+
+  if(length(edata$vh) == 0){
+    alp.h <- NA
+    names(alp.h) <- 'alp.h'
+  }else{
+    alp.h <- coef(efit)[edata$vh]
+    names(alp.h) <- paste0('alp.', edata$vh)
   }
 
   alp.g <- coef(efit)[edata$vg]
@@ -53,7 +61,14 @@ find.tsls <- function(rdata, edata){
   a <- coef(rfit)['(Intercept)'] - log(n1/n0)
   names(a) <- 'a'
 
-  list(c = c, alp.0 = alp.0, alp.x = alp.x, alp.g = alp.g, a = a, bet.x = bet.x, bet.y = bet.y, bet.z = bet.z)
+  if(tsls){
+    b <- coef(efit)[rdata$vd]
+  }else{
+    b <- coef(efit)[rdata$vd] - bet.z * c
+  }
+  names(b) <- 'b'
+
+  list(c = c, alp.0 = alp.0, alp.x = alp.x, alp.h = alp.h, alp.g = alp.g, b = b, a = a, bet.x = bet.x, bet.y = bet.y, bet.z = bet.z)
 
 }
 

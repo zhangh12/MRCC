@@ -1,8 +1,9 @@
 
-empirical.variance <- function(par, rdata, edata, par.pos){
+# generally over-estimate the variance
+empirical.variance <- function(par, rdata, edata, omega, par.pos){
 
   h <- hessian(par, rdata, edata, par.pos)
-  i <- fisher.info(par, rdata, edata, par.pos)
+  i <- fisher.info(par, rdata, edata, omega, par.pos)
 
   solve(h) %*% i %*% solve(h)
 

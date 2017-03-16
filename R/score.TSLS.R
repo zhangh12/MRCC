@@ -1,6 +1,7 @@
 
-
-score.LRT <- function(par, rdata, edata, par.pos, bet){
+# calculate the estimating equation of two-stage method
+# the parameter b is actually bet * c + b
+score.TSLS <- function(par, rdata, edata, par.pos){
 
   if(any(is.na(par))){
     return(NULL)
@@ -55,7 +56,7 @@ score.LRT <- function(par, rdata, edata, par.pos, bet){
     bet.x <- NA
   }
 
-  bet.z <- bet
+  bet.z <- par[par.pos['bet.z', 'start']:par.pos['bet.z', 'end']]
 
   ##################
 
@@ -101,7 +102,7 @@ score.LRT <- function(par, rdata, edata, par.pos, bet){
   Delta <- -1 + 1 / (1 + n1/n0 * delta) # -n1 p delta
   xi <- Delta * (1 + Delta)
 
-  r <- ez - alp.0 - eg %*% alp.g - (bet.z * c + b) * ed
+  r <- ez - alp.0 - eg %*% alp.g - b * ed
 
   if(nx > 0){
     r <- r - ex %*% alp.x
@@ -129,7 +130,7 @@ score.LRT <- function(par, rdata, edata, par.pos, bet){
   gr <- rep(NA, length(par))
   names(gr) <- names(par)
 
-  gr['c'] <- -ne/c/2 + 1/c^2/2 * sum(r^2) +     bet.z/c * sum(ed * r)
+  gr['c'] <- -ne/c/2 + 1/c^2/2 * sum(r^2)
 
   gr['alp.0'] <- 1/c * sum(r)
 
@@ -141,7 +142,7 @@ score.LRT <- function(par, rdata, edata, par.pos, bet){
     gr[name.alp.h] <- as.vector(1/c * t(eh) %*% r)
   }
 
-  gr[name.alp.g] <- as.vector(bet.z * (t(rg) %*% (rd + Delta)) + 1/c * (t(eg) %*% r))
+  gr[name.alp.g] <- 1/c * (t(eg) %*% r)
 
   if(est.b){
     gr['b'] <- 1/c * sum(ed * r)
@@ -157,7 +158,8 @@ score.LRT <- function(par, rdata, edata, par.pos, bet){
     gr[name.bet.y] <- as.vector(t(ry) %*% (rd + Delta))
   }
 
-  gr
+  gr[name.bet.z] <- sum((rd + Delta) * eta)
 
+  gr
 
 }

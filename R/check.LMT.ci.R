@@ -1,5 +1,5 @@
 
-check.LMT.ci <- function(rdata, edata, c.lmt = 1.0, level, b.ci){
+check.LMT.ci <- function(rdata, edata, omega, level, b.ci){
 
   if(is.null(b.ci)){
     return(NA)
@@ -20,8 +20,8 @@ check.LMT.ci <- function(rdata, edata, c.lmt = 1.0, level, b.ci){
     names(par.mle)[par.pos[name.bet.z, 'start']] <- name.bet.z
   }
 
-  J0 <- -hessian0(par.mle, rdata, edata, par.pos)
-  I0 <- fisher.info0(par.mle, rdata, edata, par.pos)
+  J0 <- -hessian0(par.mle, rdata, edata, omega, par.pos)
+  I0 <- fisher.info0(par.mle, rdata, edata, omega, par.pos)
   sc <- score(par.mle, rdata, edata, par.pos)[name.bet.z]
 
   id.bet <- which(colnames(J0) == name.bet.z)

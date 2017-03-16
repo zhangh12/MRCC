@@ -1,5 +1,5 @@
 
-LM.test <- function(rdata, edata, par, se, level, b.ci, fig){
+LM.test <- function(rdata, edata, omega, par, se, level, b.ci, fig){
 
   null.mle <- find.null.tsls(rdata, edata)
   ap <- align.parameter(null.mle)
@@ -8,7 +8,7 @@ LM.test <- function(rdata, edata, par, se, level, b.ci, fig){
 
   name.bet.z <- paste0('bet.', edata$vz)
 
-  J0 <- -hessian0(par.mle, rdata, edata, par.pos)
+  J0 <- -hessian0(par.mle, rdata, edata, omega, par.pos)
   #J <- -hessian(par.mle, rdata, edata, par.pos)
   sc <- score(par.mle, rdata, edata, par.pos)[name.bet.z]
 
@@ -17,7 +17,7 @@ LM.test <- function(rdata, edata, par, se, level, b.ci, fig){
     lm.stat <- sc^2 * solve(J0)[id.bet, id.bet]
     #lm.stat <- sc^2 * solve(J)[id.bet, id.bet]
   }else{
-    I0 <- fisher.info0(par.mle, rdata, edata, par.pos)
+    I0 <- fisher.info0(par.mle, rdata, edata, omega, par.pos)
 
     v <- cbind(-J0[id.bet,-id.bet] %*% solve(J0[-id.bet, -id.bet]), 1)
     colnames(v)[ncol(v)] <- name.bet.z
@@ -27,9 +27,9 @@ LM.test <- function(rdata, edata, par, se, level, b.ci, fig){
   }
   p.lmt <- pchisq(lm.stat, df = 1, lower.tail = FALSE)
 
-  ci <- LMT.conf.int(rdata, edata, par, se, c.lmt = 1.0, level, fig)
+  ci <- LMT.conf.int(rdata, edata, omega, par, se, level, fig)
 
-  in.ci <- check.LMT.ci(rdata, edata, c.lmt = 1.0, level, b.ci)
+  in.ci <- check.LMT.ci(rdata, edata, omega, level, b.ci)
 
   list(p.lmt = p.lmt, ci = ci, in.ci = in.ci, stat = lm.stat)
 

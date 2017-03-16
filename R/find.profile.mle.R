@@ -1,4 +1,4 @@
-
+# this function would need further modification
 
 find.profile.mle <- function(rdata, edata){
 
@@ -12,7 +12,7 @@ find.profile.mle <- function(rdata, edata){
     par.ini <- ap$par
     par.pos <- ap$par.pos
 
-    t1 <- try(sol <- optimx(par.ini, nlogL.LRT, gr = nscore.LRT, method = 'ucminf',
+    t1 <- try(sol <- optimx(par.ini, nlogL.LRT, gr = nscore.LRT, method = 'ucminf', control = list(dowarn = FALSE),
                             rdata = rdata, edata = edata, par.pos = par.pos, bet = b), silent = TRUE)
 
     # t1 <- try(sol <- optimx(par.ini, nlogL.LRT, gr = nscore.LRT, hess = nhessian.LRT, method = 'ucminf',

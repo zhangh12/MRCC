@@ -1,6 +1,6 @@
 
 
-mrcc <- function(rformula, rdata, eformula, edata, level = 0.95, start = NULL, b.ci = NULL, fig = FALSE){
+mrcc <- function(rformula, rdata, eformula, edata, level = 0.95, ce = FALSE, start = NULL, b.ci = NULL, fig = FALSE){
 
   rdata <- parse.rdata(rformula, rdata)
   edata <- parse.edata(eformula, edata)
@@ -9,25 +9,22 @@ mrcc <- function(rformula, rdata, eformula, edata, level = 0.95, start = NULL, b
 
   rdata <- exd$rdata
   edata <- exd$edata
-  summary.h <- exd$summary.h
+  omega <- exd$omega
 
-  c.adj <- null.adjustment(rdata, edata)
-  res.tsls <- TSLS.test(rdata, edata, c.adj$c.tsls, level, FALSE, b.ci)
-  res.wald <- wald.test(rdata, edata, c.adj$c.wald, level, FALSE, start, b.ci)
+  res.tsls <- TSLS.test(rdata, edata, omega, level, b.ci)
+  res.wald <- wald.test(rdata, edata, omega, level, start, b.ci)
   if(is.null(res.wald)){
     return(NULL)
   }
 
   #find.profile.mle(rdata, edata)
 
-  #res.wald1 <- wald.test1(rdata, edata, c.adj$c.wald, level)
-  res.lm <- LM.test(rdata, edata, res.tsls$par, res.tsls$se, level, b.ci, fig)
-  res.lr <- LR.test(rdata, edata, res.wald$max.logL, res.lm$stat, res.tsls$par, res.tsls$se, c.adj$c.lrt, level, b.ci, fig)
+  res.lm <- LM.test(rdata, edata, omega, res.tsls$par, res.tsls$se, level, b.ci, fig)
+  res.lr <- LR.test(rdata, edata, res.wald$max.logL, res.lm$stat, res.tsls$par, res.tsls$se, level, b.ci, fig)
 
-  res.wald <- rescale.wald.ci(res.wald, res.lm, edata, level, b.ci)
+  #res.wald <- rescale.wald.ci(res.wald, res.lm, edata, level, b.ci)
 
-  #return(list(res.wald = res.wald, res.tsls = res.tsls))
-  return(list(wald = res.wald, lr = res.lr, lm = res.lm, tsls = res.tsls))
+  list(wald = res.wald, lr = res.lr, lm = res.lm, tsls = res.tsls, version = '0.1.9')
 
 }
 

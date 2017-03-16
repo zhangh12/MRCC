@@ -1,5 +1,5 @@
 
-LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
+LMT.conf.int <- function(rdata, edata, omega, par, se, level, fig){
 
   crit <- qchisq(level, df = 1)
   par.pos <- align.parameter(find.null.tsls(rdata, edata))$par.pos
@@ -10,7 +10,7 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
   names(b0) <- NULL
   names(se) <- NULL
   rm(par)
-  bet <- seq(b0 - 10 * qnorm((1+level)/2) * se, b0 + 10 * qnorm((1+level)/2) * se, by = .05)
+  bet <- seq(b0 - 5 * qnorm((1+level)/2) * se, b0 + 5 * qnorm((1+level)/2) * se, by = .05)
   bet <- c(bet, 0)
   bet[abs(bet) < 1e-3] <- 0
   bet <- sort(unique(bet))
@@ -30,8 +30,8 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
       names(par.mle)[par.pos['bet.z', 'start']] <- name.bet.z
     }
 
-    J0 <- -hessian0(par.mle, rdata, edata, par.pos)
-    I0 <- fisher.info0(par.mle, rdata, edata, par.pos)
+    J0 <- -hessian0(par.mle, rdata, edata, omega, par.pos)
+    I0 <- fisher.info0(par.mle, rdata, edata, omega, par.pos)
     sc <- score(par.mle, rdata, edata, par.pos)[name.bet.z]
 
     id.bet <- which(colnames(J0) == name.bet.z)
@@ -123,8 +123,8 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
         names(par.mle)[par.pos['bet.z', 'start']] <- name.bet.z
       }
 
-      J0 <- -hessian0(par.mle, rdata, edata, par.pos)
-      I0 <- fisher.info0(par.mle, rdata, edata, par.pos)
+      J0 <- -hessian0(par.mle, rdata, edata, omega, par.pos)
+      I0 <- fisher.info0(par.mle, rdata, edata, omega, par.pos)
       sc <- score(par.mle, rdata, edata, par.pos)[name.bet.z]
       id.bet <- which(colnames(J0) == name.bet.z)
       v <- cbind(-J0[id.bet,-id.bet] %*% solve(J0[-id.bet, -id.bet]), 1)
@@ -194,8 +194,8 @@ LMT.conf.int <- function(rdata, edata, par, se, c.lmt, level, fig){
         names(par.mle)[par.pos['bet.z', 'start']] <- name.bet.z
       }
 
-      J0 <- -hessian0(par.mle, rdata, edata, par.pos)
-      I0 <- fisher.info0(par.mle, rdata, edata, par.pos)
+      J0 <- -hessian0(par.mle, rdata, edata, omega, par.pos)
+      I0 <- fisher.info0(par.mle, rdata, edata, omega, par.pos)
       sc <- score(par.mle, rdata, edata, par.pos)[name.bet.z]
       id.bet <- which(colnames(J0) == name.bet.z)
       v <- cbind(-J0[id.bet,-id.bet] %*% solve(J0[-id.bet, -id.bet]), 1)

@@ -1,7 +1,7 @@
 
 find.mle <- function(par.tsls, rdata, edata, par.pos){
 
-  sol <- optimx(par.tsls, nlogL, gr = nscore, method = 'ucminf',
+  sol <- optimx(par.tsls, nlogL, gr = nscore, method = 'ucminf', hessian = TRUE, control = list(dowarn = FALSE),
                 rdata = rdata, edata = edata, par.pos = par.pos)
 
   # sol <- optimx(par.tsls, nlogL, gr = nscore, hess = nhessian, method = 'ucminf',

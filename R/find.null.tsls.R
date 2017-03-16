@@ -20,6 +20,14 @@ find.null.tsls <- function(rdata, edata){
     names(alp.x) <- paste0('alp.', edata$vx)
   }
 
+  if(length(edata$vh) == 0){
+    alp.h <- NA
+    names(alp.h) <- 'alp.h'
+  }else{
+    alp.h <- coef(efit)[edata$vh]
+    names(alp.h) <- paste0('alp.', edata$vh)
+  }
+
   alp.g <- coef(efit)[edata$vg]
   names(alp.g) <- paste0('alp.', edata$vg)
 
@@ -50,10 +58,13 @@ find.null.tsls <- function(rdata, edata){
   a <- coef(rfit)['(Intercept)'] - log(n1/n0)
   names(a) <- 'a'
 
+  b <- coef(efit)[rdata$vd]
+  names(b) <- 'b'
+
   bet.z <- 0
   names(bet.z) <- paste0('bet.', edata$vz)
 
-  list(c = c, alp.0 = alp.0, alp.x = alp.x, alp.g = alp.g, a = a, bet.x = bet.x, bet.y = bet.y, bet.z = bet.z)
+  list(c = c, alp.0 = alp.0, alp.x = alp.x, alp.h = alp.h, alp.g = alp.g, b = b, a = a, bet.x = bet.x, bet.y = bet.y, bet.z = bet.z)
 
 }
 

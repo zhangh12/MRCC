@@ -1,4 +1,4 @@
-
+# this function would need further modification
 # find MLE by rotation, bet -> alp -> bet -> ...
 find.mle.2S <- function(par, rdata, edata, par.pos){
 

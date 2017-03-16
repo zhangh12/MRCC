@@ -1,15 +1,18 @@
 
 
-align.parameter <- function(fit, null = FALSE){
+align.parameter <- function(fit, rm = FALSE){
 
   par.name <- NULL
   start <- NULL
   end <- NULL
   par <- NULL
 
-  np <- ifelse(null, 7, 8)
+  np <- length(fit)
 
   for(i in 1:np){
+    if(rm && (names(fit)[i] == 'bet.z')){
+      next
+    }
     tmp <- fit[[names(fit)[i]]]
     if(all(!is.na(tmp))){
       par <- c(par, tmp)

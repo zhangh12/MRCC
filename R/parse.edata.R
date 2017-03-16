@@ -20,23 +20,18 @@ parse.edata <- function(eformula, edata){
   rownames(edata) <- edata$id
 
   mf <- model.frame(eformula, na.action = na.pass, data = edata, rhs=1:2, lhs=1:2, drop=FALSE)
-  retro <- model.part(eformula, mf, lhs=2, drop=F)
+  retro <- model.part(eformula, mf, lhs=2, drop=F)[, , drop = FALSE]
+  covar <- model.matrix(eformula, mf, rhs=1, drop=F)[, -1, drop = FALSE]
+  geno <- model.matrix(eformula, mf, rhs=2, drop=F)[, -1, drop = FALSE]
+  expo <- model.part(eformula, mf, lhs=1, drop=FALSE)[, , drop = FALSE]
 
-  id <- which(retro == 0)
-  if(length(id) == 0){
-    stop('All exposure data are collected from cases')
-  }
-
-  covar <- model.matrix(eformula, mf, rhs=1, drop=F)[id, -1, drop = FALSE]
-  geno <- model.matrix(eformula, mf, rhs=2, drop=F)[id, -1, drop = FALSE]
-  expo <- model.part(eformula, mf, lhs=1, drop=FALSE)[id, , drop = FALSE]
-
+  retro.var <- colnames(retro)
   expo.var <- colnames(expo)
   covar.var <- colnames(covar)
   geno.var <- colnames(geno)
 
-  data <- data.frame(expo, covar, geno, stringsAsFactors = FALSE)
+  data <- data.frame(expo, retro, covar, geno, stringsAsFactors = FALSE)
 
-  list(data = data, expo.var = expo.var, covar.var = covar.var, geno.var = geno.var)
+  list(data = data, expo.var = expo.var, covar.var = covar.var, geno.var = geno.var, retro.var = retro.var)
 
 }

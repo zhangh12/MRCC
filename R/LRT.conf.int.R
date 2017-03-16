@@ -1,5 +1,5 @@
 
-LRT.conf.int <- function(rdata, edata, logL.obs.alt, par, se, c.lrt, level, fig){
+LRT.conf.int <- function(rdata, edata, omega, logL.obs.alt, par, se, c.lrt, level, fig){
 
   crit <- c.lrt * qchisq(level, df = 1)
   par.pos <- align.parameter(find.tsls(rdata, edata))$par.pos
@@ -10,7 +10,7 @@ LRT.conf.int <- function(rdata, edata, logL.obs.alt, par, se, c.lrt, level, fig)
   names(b0) <- NULL
   names(se) <- NULL
   rm(par)
-  bet <- seq(b0 - 10 * qnorm((1+level)/2) * se, b0 + 10 * qnorm((1+level)/2) * se, by = .05)
+  bet <- seq(b0 - 5 * qnorm((1+level)/2) * se, b0 + 5 * qnorm((1+level)/2) * se, by = .05)
   bet <- c(bet, 0)
   bet[abs(bet) < 1e-3] <- 0
   bet <- sort(unique(bet))

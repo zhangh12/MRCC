@@ -53,35 +53,36 @@ extend.data <- function(rdata, edata){
   rg <- as.matrix(rdata[, vg, drop = FALSE])
   eg <- as.matrix(edata[, vg, drop = FALSE])
   ez <- as.matrix(edata[, vz, drop = FALSE])
+  ed <- as.matrix(edata[, vd, drop = FALSE])
 
   rdat <- rdata[, c(vd, vg, vx, vy)]
-  edat <- edata[, c(vz, vg, vx, vh)]
-
-  if(!is.null(vh)){
-    hform <- paste(vz, '~', paste(vh, collapse = '+'))
-    hform <- as.formula(hform)
-    hfit <- lm(hform, data = edat)
-    ez[] <- hfit$residuals
-    edat[, vz] <- ez
-    alp.h <- summary(hfit)$coefficients[vh, 'Estimate']
-    se.h <- summary(hfit)$coefficients[vh, 'Std. Error']
-    summary.h <- data.frame(Estimate = alp.h, SE = se.h, SE0 = se.h, stringsAsFactors = FALSE)
-    rownames(summary.h) <- paste0('alp.', vh)
-    summary.h$z <- summary.h$Estimate / summary.h$SE
-    summary.h$"Pr(>|z|)" <- pchisq(summary.h$z^2, df = 1, lower.tail = FALSE)
-    edat[, vh] <- NULL
-    vh <- NULL
-  }else{
-    summary.h <- NULL
-  }
+  edat <- edata[, c(vd, vg, vx, vh, vz)]
 
   rdata <- list(data = rdat,
                 vx = vx, vy = vy, vd = vd, vg = vg,
                 rx = rx, ry = ry, rd = rd, rg = rg)
   edata <- list(data = edat,
-                vx = vx, vg = vg, vz = vz,
-                ex = ex, eg = eg, ez = ez)
+                vx = vx, vg = vg, vz = vz, vd = vd, vh = vh,
+                ex = ex, eg = eg, ez = ez, ed = ed, eh = eh)
 
-  list(rdata = rdata, edata = edata, summary.h = summary.h)
+  id1 <- setdiff(rownames(rdat), rownames(edat))
+  id2 <- setdiff(rownames(edat), rownames(rdat))
+  id3 <- intersect(rownames(rdat), rownames(edat))
+
+  id10 <- id1[which(rdat[id1, vd] == 0)]
+  id11 <- id1[which(rdat[id1, vd] == 1)]
+
+  id20 <- id2[which(edat[id2, vd] == 0)]
+  id21 <- id2[which(edat[id2, vd] == 1)]
+
+  id30 <- id3[which(rdat[id3, vd] == 0)]
+  id31 <- id3[which(rdat[id3, vd] == 1)]
+
+  omega <- list(id1 = id1, id10 = id10, id11 = id11,
+                id2 = id2, id20 = id20, id21 = id21,
+                id3 = id3, id30 = id30, id31 = id31)
+
+
+  list(rdata = rdata, edata = edata, omega = omega)
 
 }

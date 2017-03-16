@@ -11,6 +11,14 @@ hessian.LRT <- function(par, rdata, edata, par.pos, bet){
 
   a <- par['a']
 
+  if('b' %in% names(par)){
+    b <- par['b']
+    est.b <- TRUE
+  }else{
+    b <- 0
+    est.b <- FALSE
+  }
+
   c <- par['c']
   alp.0 <- par['alp.0']
 
@@ -20,6 +28,14 @@ hessian.LRT <- function(par, rdata, edata, par.pos, bet){
   }else{
     alp.x <- NA
     nx <- 0
+  }
+
+  if('alp.h' %in% par.pos$par.name){
+    alp.h <- par[par.pos['alp.h', 'start']:par.pos['alp.h', 'end']]
+    nh <- length(alp.h)
+  }else{
+    alp.h <- NA
+    nh <- 0
   }
 
   alp.g <- par[par.pos['alp.g', 'start']:par.pos['alp.g', 'end']]
@@ -53,6 +69,10 @@ hessian.LRT <- function(par, rdata, edata, par.pos, bet){
     #eta.x <- as.vector(rx %*% alp.x)
   }
 
+  if(nh > 0){
+    eh <- as.matrix(edata$data[, edata$vh, drop = FALSE])
+  }
+
   if(ny > 0){
     ry <- as.matrix(rdata$data[, rdata$vy, drop = FALSE])
   }
@@ -61,9 +81,10 @@ hessian.LRT <- function(par, rdata, edata, par.pos, bet){
   n1 <- sum(rd)
   n0 <- nr - n1
 
-  lin <- a
+  ed <- as.vector(edata$data[, edata$vd])
+  ez <- as.vector(edata$data[, edata$vz])
 
-  lin <- lin + rg %*% alp.g * bet.z
+  lin <- a + rg %*% alp.g * bet.z
   if(nx > 0){
     lin <- lin + rx %*% bet.x
   }
@@ -80,24 +101,24 @@ hessian.LRT <- function(par, rdata, edata, par.pos, bet){
   Delta <- -1 + 1 / (1 + n1/n0 * delta) # -n1 p delta
   xi <- Delta * (1 + Delta)
 
-  r <- edata$data[, edata$vz] - alp.0 - eg %*% alp.g
+  r <- ez - alp.0 - eg %*% alp.g - (bet.z * c + b) * ed
 
   if(nx > 0){
     r <- r - ex %*% alp.x
+  }
+
+  if(nh > 0){
+    r <- r - eh %*% alp.h
   }
   r <- as.vector(r)
 
   one <- rep(1, ne)
 
-  name.alp.g <- paste0('alp.', rdata$vg)
-  if(nx > 0){
-    name.alp.x <- paste0('alp.', rdata$vx)
-    name.bet.x <- paste0('bet.', rdata$vx)
-  }
-
-  if(ny > 0){
-    name.bet.y <- paste0('bet.', rdata$vy)
-  }
+  name.alp.g <- paste0('alp.', edata$vg)
+  name.alp.x <- paste0('alp.', edata$vx)
+  name.alp.h <- paste0('alp.', edata$vh)
+  name.bet.x <- paste0('bet.', rdata$vx)
+  name.bet.y <- paste0('bet.', rdata$vy)
 
   ###########################
   ## calculate Hess matrix ##
@@ -107,15 +128,28 @@ hessian.LRT <- function(par, rdata, edata, par.pos, bet){
   rownames(hess) <- names(par)
   colnames(hess) <- names(par)
 
-  hess['c', 'c'] <- ne/c^2/2 - 1/c^3 * sum(r^2)
+  hess['c', 'c'] <- ne/c^2/2 - 1/c^3 * sum(r^2) -
+    2 * bet.z/c^2 * sum(ed * r) - bet.z^2/c * sum(ed)
 
-  hess['c', 'alp.0'] <- -1/c^2 * sum(r)
+  hess['c', 'alp.0'] <- -1/c^2 * sum(r) -
+    bet.z/c * sum(ed)
 
   if(nx > 0){
-    hess['c', name.alp.x] <- -1/c^2 * t(t(ex) %*% r)
+    hess['c', name.alp.x] <- -1/c^2 * t(t(ex) %*% r) -
+      bet.z/c * t(t(ex) %*% ed)
   }
 
-  hess['c', name.alp.g] <- -1/c^2 * t(t(eg) %*% r)
+  if(nh > 0){
+    hess['c', name.alp.h] <- -1/c^2 * t(t(eh) %*% r) -
+      bet.z/c * t(t(eh) %*% ed)
+  }
+
+  hess['c', name.alp.g] <- -1/c^2 * t(t(eg) %*% r) -
+    bet.z/c * t(t(eg) %*% ed)
+
+  if(est.b){
+    hess['c', 'b'] <- -bet.z/c * sum(ed) - 1/c^2 * sum(ed * r)
+  }
 
   ############
 
@@ -125,19 +159,51 @@ hessian.LRT <- function(par, rdata, edata, par.pos, bet){
     hess['alp.0', name.alp.x] <- -1/c * t(t(ex) %*% one)
   }
 
+  if(nh > 0){
+    hess['alp.0', name.alp.h] <- -1/c * t(t(eh) %*% one)
+  }
+
   hess['alp.0', name.alp.g] <- -1/c * t(t(eg) %*% one)
+
+  if(est.b){
+    hess['alp.0', 'b'] <- -1/c * sum(ed)
+  }
 
   ############
 
   if(nx > 0){
     hess[name.alp.x, name.alp.x] <- -1/c * (t(ex) %*% ex)
 
+    if(nh > 0){
+      hess[name.alp.x, name.alp.h] <- -1/c * (t(ex) %*% eh)
+    }
+
     hess[name.alp.x, name.alp.g] <- -1/c * (t(ex) %*% eg)
+
+    if(est.b){
+      hess[name.alp.x, 'b'] <- -1/c * (t(ex) %*% ed)
+    }
+  }
+
+  ############
+
+  if(nh > 0){
+    hess[name.alp.h, name.alp.h] <- -1/c * (t(eh) %*% eh)
+
+    hess[name.alp.h, name.alp.g] <- -1/c * (t(eh) %*% eg)
+
+    if(est.b){
+      hess[name.alp.h, 'b'] <- -1/c * (t(eh) %*% ed)
+    }
   }
 
   ############
 
   hess[name.alp.g, name.alp.g] <- bet.z^2 * (t(rg) %*% (xi * rg)) - 1/c * (t(eg) %*% eg)
+
+  if(est.b){
+    hess[name.alp.g, 'b'] <- -1/c * (t(eg) %*% ed)
+  }
 
   hess[name.alp.g, 'a'] <- bet.z * (t(rg) %*% xi)
 
@@ -150,6 +216,10 @@ hessian.LRT <- function(par, rdata, edata, par.pos, bet){
   }
 
   ############
+
+  if(est.b){
+    hess['b', 'b'] <- -1/c * sum(ed)
+  }
 
   hess['a', 'a'] <- sum(xi)
 

@@ -4,11 +4,12 @@ find.LRT.mle <- function(rdata, edata, bet){
 
   tsls <- find.LRT.tsls(rdata, edata, bet)
 
-  ap <- align.parameter(tsls, null = TRUE)
+  name.bet.z <- paste0('bet.',edata$vz)
+  ap <- align.parameter(tsls, rm = TRUE)
   par.tsls <- ap$par
   par.pos <- ap$par.pos
 
-  sol <- optimx(par.tsls, nlogL.LRT, gr = nscore.LRT, method = 'ucminf',
+  sol <- optimx(par.tsls, nlogL.LRT, method = 'ucminf', control = list(dowarn = FALSE), 
                 rdata = rdata, edata = edata, par.pos = par.pos, bet = bet)
 
   # sol <- optimx(par.tsls, nlogL.LRT, gr = nscore.LRT, hess = nhessian.LRT, method = 'ucminf',
