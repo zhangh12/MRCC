@@ -9,7 +9,7 @@ find.LRT.mle <- function(rdata, edata, bet){
   par.tsls <- ap$par
   par.pos <- ap$par.pos
 
-  sol <- optimx(par.tsls, nlogL.LRT, method = 'ucminf', control = list(dowarn = FALSE), 
+  sol <- optimx(par.tsls, nlogL.LRT, gr = nscore.LRT, method = 'ucminf', control = list(dowarn = FALSE),
                 rdata = rdata, edata = edata, par.pos = par.pos, bet = bet)
 
   # sol <- optimx(par.tsls, nlogL.LRT, gr = nscore.LRT, hess = nhessian.LRT, method = 'ucminf',

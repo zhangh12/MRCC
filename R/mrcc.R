@@ -24,7 +24,7 @@ mrcc <- function(rformula, rdata, eformula, edata, level = 0.95, ce = FALSE, sta
 
   #res.wald <- rescale.wald.ci(res.wald, res.lm, edata, level, b.ci)
 
-  list(wald = res.wald, lr = res.lr, lm = res.lm, tsls = res.tsls, version = '0.1.9')
+  list(wald = res.wald, lr = res.lr, lm = res.lm, tsls = res.tsls, version = packageVersion('MRCC'))
 
 }
 
