@@ -21,13 +21,11 @@ wald.test <- function(rdata, edata, omega, level, start = NULL, b.ci = NULL){
 
   name.bet.z <- paste0('bet.', edata$vz)
   max.logL <- logL(par, rdata, edata, par.pos)
-  hess <- hessian(par, rdata, edata, par.pos)
-  se <- sqrt(diag(solve(-hess)))
 
-  ev <- empirical.variance(par, rdata, edata, omega, par.pos)
-  tv <- theoretical.variance(par, rdata, edata, omega, par.pos)
-  emp.se <- sqrt(diag(ev))
-  se0 <- sqrt(diag(tv))
+  se <- working.variance(par, rdata, edata, omega, par.pos)
+
+  emp.se <- empirical.variance(par, rdata, edata, omega, par.pos)
+  se0 <- theoretical.variance(par, rdata, edata, omega, par.pos)
 
   summary <- data.frame(Estimate = par, SE = se, stringsAsFactors = FALSE)
 

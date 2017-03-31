@@ -1,2 +1,2 @@
-import(Formula, optimx)
+import(Formula, optimx, stats, utils, graphics)
 export(mrcc, SS)

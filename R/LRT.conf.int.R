@@ -1,5 +1,5 @@
 
-LRT.conf.int <- function(rdata, edata, omega, logL.obs.alt, par, se, c.lrt, level, fig){
+LRT.conf.int <- function(rdata, edata, logL.obs.alt, par, se, c.lrt, level, fig){
 
   crit <- c.lrt * qchisq(level, df = 1)
   par.pos <- align.parameter(find.tsls(rdata, edata))$par.pos

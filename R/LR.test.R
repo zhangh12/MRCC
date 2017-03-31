@@ -8,7 +8,7 @@ LR.test <- function(rdata, edata, logL.obs.alt, lm.stat, par, se, level, b.ci, f
 
   p.lrt <- pchisq(lr.stat/c.lrt, df = 1, lower.tail = FALSE)
 
-  ci <- LRT.conf.int(rdata, edata, omega, logL.obs.alt, par, se, c.lrt, level, fig)
+  ci <- LRT.conf.int(rdata, edata, logL.obs.alt, par, se, c.lrt, level, fig)
 
   in.ci <- check.LRT.ci(rdata, edata, logL.obs.alt, c.lrt, level, b.ci)
 
