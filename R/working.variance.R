@@ -17,6 +17,6 @@ working.variance <- function(par, rdata, edata, omega, par.pos){
 
   v <- solve(-h)
   v['a', 'a'] <- v['a', 'a'] - (n0+n1)/n0/n1
-  sqrt(diag(v))
+  v
 
 }

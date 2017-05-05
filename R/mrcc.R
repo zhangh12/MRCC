@@ -22,9 +22,10 @@ mrcc <- function(rformula, rdata, eformula, edata, level = 0.95, ce = FALSE, sta
   res.lm <- LM.test(rdata, edata, omega, res.tsls$par, res.tsls$se, level, b.ci, fig)
   res.lr <- LR.test(rdata, edata, res.wald$max.logL, res.lm$stat, res.tsls$par, res.tsls$se, level, b.ci, fig)
 
-  #res.wald <- rescale.wald.ci(res.wald, res.lm, edata, level, b.ci)
+  res.wald <- rescale.wald.ci(res.wald, res.lm, edata, level, b.ci)
 
   list(wald = res.wald, lr = res.lr, lm = res.lm, tsls = res.tsls, version = packageVersion('MRCC'))
+  #list(wald = res.wald, tsls = res.tsls, version = packageVersion('MRCC'))
 
 }
 

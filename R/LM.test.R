@@ -1,4 +1,8 @@
 
+# expected information is used in score test for consistency
+# http://www.stat.berkeley.edu/~census/mle3.pdf
+# The American Statistician vol. 61 (2007) pp. 291–295
+
 LM.test <- function(rdata, edata, omega, par, se, level, b.ci, fig){
 
   null.mle <- find.null.tsls(rdata, edata)

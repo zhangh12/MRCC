@@ -1,4 +1,8 @@
 
+# Observed information is used for Wald's test
+# https://www.jstor.org/stable/pdf/2335893.pdf
+#  Bradley Efron and David V. Hinkley, Biometrika, 65:3, 457-482
+
 wald.test <- function(rdata, edata, omega, level, start = NULL, b.ci = NULL){
 
   if(is.null(start)){
@@ -22,7 +26,11 @@ wald.test <- function(rdata, edata, omega, level, start = NULL, b.ci = NULL){
   name.bet.z <- paste0('bet.', edata$vz)
   max.logL <- logL(par, rdata, edata, par.pos)
 
-  se <- working.variance(par, rdata, edata, omega, par.pos)
+  h <- hessian(par, rdata, edata, par.pos)
+  #h0 <- hessian0(par, rdata, edata, omega, par.pos)
+  v <- working.variance(par, rdata, edata, omega, par.pos)
+  se <- sqrt(diag(v))
+  cond.num <- kappa(-h, exact = TRUE)
 
   emp.se <- empirical.variance(par, rdata, edata, omega, par.pos)
   se0 <- theoretical.variance(par, rdata, edata, omega, par.pos)
@@ -46,7 +54,7 @@ wald.test <- function(rdata, edata, omega, level, start = NULL, b.ci = NULL){
 
   list(par = par, se = se, p.wald = p.wald, ci = ci,
        summary = summary, in.ci = in.ci, gr = gr, max.logL = max.logL,
-       stat = wald.stat)
+       stat = wald.stat, cond.num = cond.num)
 
 }
 
